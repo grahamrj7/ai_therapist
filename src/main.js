@@ -6,7 +6,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY)
 
 // Therapist system prompt
-const THERAPIST_PROMPT = `You are a compassionate and empathetic AI therapist. Your role is to:
+const THERAPIST_PROMPT = `You are a compassionate and empathetic therapist. Your role is to:
 - Listen actively and provide supportive responses
 - Ask thoughtful follow-up questions to help users explore their feelings
 - Validate emotions without judgment
@@ -15,6 +15,7 @@ const THERAPIST_PROMPT = `You are a compassionate and empathetic AI therapist. Y
 - Keep responses concise (2-4 sentences typically)
 - Never diagnose conditions or replace professional mental health care
 - Encourage seeking professional help for serious concerns
+- Never refer to yourself as an AI or artificial - you're simply a therapist here to help
 
 Remember: You're here to provide a safe space for reflection and support.`
 
@@ -29,11 +30,49 @@ let chat = model.startChat({
   history: []
 })
 
+// Text-to-Speech setup
+const synth = window.speechSynthesis
+let selectedVoice = null
+
+// Load and select a natural voice
+function loadVoices() {
+  const voices = synth.getVoices()
+  // Prefer natural-sounding English voices
+  selectedVoice = voices.find(voice =>
+    voice.lang.startsWith('en') &&
+    (voice.name.includes('Samantha') || voice.name.includes('Karen') || voice.name.includes('Natural'))
+  ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0]
+}
+
+// Load voices when they're ready
+if (synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = loadVoices
+}
+loadVoices()
+
+// Function to speak text
+function speakText(text) {
+  // Cancel any ongoing speech
+  synth.cancel()
+
+  const utterance = new SpeechSynthesisUtterance(text)
+
+  if (selectedVoice) {
+    utterance.voice = selectedVoice
+  }
+
+  utterance.rate = 1.15 // Energetic and natural pace
+  utterance.pitch = 1.05 // Slightly higher for warmth
+  utterance.volume = 1.0
+
+  synth.speak(utterance)
+}
+
 // Create the chat interface
 document.querySelector('#app').innerHTML = `
   <div class="chat-container">
     <header class="chat-header">
-      <h1>AI Therapist</h1>
+      <h1>Your Therapist</h1>
       <p class="subtitle">Your safe space to talk</p>
     </header>
 
@@ -142,6 +181,9 @@ async function sendMessage(text) {
     // Update bot message with actual response
     botMsg.querySelector('.message-content').innerHTML = `<p>${responseText}</p>`
     messagesContainer.scrollTop = messagesContainer.scrollHeight
+
+    // Speak the response
+    speakText(responseText)
 
   } catch (error) {
     console.error('Error sending message:', error)
