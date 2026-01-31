@@ -237,6 +237,17 @@ body {
   transform: translateY(-1px);
 }
 
+.send-btn:disabled,
+.text-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.typing-indicator {
+  font-style: italic;
+  opacity: 0.7;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-primary: #1a202c;

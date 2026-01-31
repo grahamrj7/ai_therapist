@@ -1,4 +1,33 @@
 import './style.css'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+// Initialize Gemini API
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const genAI = new GoogleGenerativeAI(API_KEY)
+
+// Therapist system prompt
+const THERAPIST_PROMPT = `You are a compassionate and empathetic AI therapist. Your role is to:
+- Listen actively and provide supportive responses
+- Ask thoughtful follow-up questions to help users explore their feelings
+- Validate emotions without judgment
+- Offer gentle insights and coping strategies when appropriate
+- Maintain a warm, professional, and caring tone
+- Keep responses concise (2-4 sentences typically)
+- Never diagnose conditions or replace professional mental health care
+- Encourage seeking professional help for serious concerns
+
+Remember: You're here to provide a safe space for reflection and support.`
+
+// Initialize the model with system instructions
+const model = genAI.getGenerativeModel({
+  model: 'gemini-2.5-flash',
+  systemInstruction: THERAPIST_PROMPT
+})
+
+// Initialize chat session
+let chat = model.startChat({
+  history: []
+})
 
 // Create the chat interface
 document.querySelector('#app').innerHTML = `
@@ -70,7 +99,7 @@ voiceBtn.addEventListener('click', () => {
 })
 
 // Send message function
-function sendMessage(text) {
+async function sendMessage(text) {
   if (!text.trim()) return
 
   // Add user message
@@ -89,18 +118,50 @@ function sendMessage(text) {
   // Scroll to bottom
   messagesContainer.scrollTop = messagesContainer.scrollHeight
 
-  // Simulate bot response (placeholder)
-  setTimeout(() => {
+  // Disable input while waiting for response
+  textInput.disabled = true
+  sendBtn.disabled = true
+
+  try {
+    // Create bot message container
     const botMsg = document.createElement('div')
     botMsg.className = 'message bot-message'
     botMsg.innerHTML = `
       <div class="message-content">
-        <p>I hear you. Tell me more about that...</p>
+        <p class="typing-indicator">Thinking...</p>
       </div>
     `
     messagesContainer.appendChild(botMsg)
     messagesContainer.scrollTop = messagesContainer.scrollHeight
-  }, 1000)
+
+    // Send message to Gemini
+    const result = await chat.sendMessage(text)
+    const response = await result.response
+    const responseText = response.text()
+
+    // Update bot message with actual response
+    botMsg.querySelector('.message-content').innerHTML = `<p>${responseText}</p>`
+    messagesContainer.scrollTop = messagesContainer.scrollHeight
+
+  } catch (error) {
+    console.error('Error sending message:', error)
+
+    // Show error message
+    const errorMsg = document.createElement('div')
+    errorMsg.className = 'message bot-message'
+    errorMsg.innerHTML = `
+      <div class="message-content">
+        <p style="color: #e53e3e;">Sorry, I'm having trouble connecting. Please check your API key and try again.</p>
+      </div>
+    `
+    messagesContainer.appendChild(errorMsg)
+    messagesContainer.scrollTop = messagesContainer.scrollHeight
+  } finally {
+    // Re-enable input
+    textInput.disabled = false
+    sendBtn.disabled = false
+    textInput.focus()
+  }
 }
 
 // Text input handlers
