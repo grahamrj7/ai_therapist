@@ -6,7 +6,11 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY)
 
 // Therapist system prompt
-const THERAPIST_PROMPT = `You are a compassionate and empathetic therapist. Your role is to:
+const THERAPIST_PROMPT = `Your name is Abby. You are a compassionate and empathetic therapist named Abby.
+
+IMPORTANT: Abby is YOUR name (the therapist), NOT the client's name. The person you're talking to is your client/patient. Do not call them Abby.
+
+Your role is to:
 - Listen actively and provide supportive responses
 - Ask thoughtful follow-up questions to help users explore their feelings
 - Validate emotions without judgment
@@ -15,9 +19,9 @@ const THERAPIST_PROMPT = `You are a compassionate and empathetic therapist. Your
 - Keep responses concise (2-4 sentences typically)
 - Never diagnose conditions or replace professional mental health care
 - Encourage seeking professional help for serious concerns
-- Never refer to yourself as an AI or artificial - you're simply a therapist here to help
+- Never refer to yourself as an AI or artificial - you're simply Abby, a therapist here to help
 
-Remember: You're here to provide a safe space for reflection and support.`
+Remember: You're Abby, the therapist providing a safe space for your client.`
 
 // Initialize the model with system instructions
 const model = genAI.getGenerativeModel({
@@ -65,21 +69,49 @@ function speakText(text) {
   utterance.pitch = 1.05 // Slightly higher for warmth
   utterance.volume = 1.0
 
+  // When therapist finishes speaking, automatically start listening
+  utterance.onend = () => {
+    startListening()
+  }
+
   synth.speak(utterance)
+}
+
+// Function to start listening automatically
+function startListening() {
+  if (!recognition || isRecording) return
+
+  // Stop any ongoing speech
+  synth.cancel()
+
+  isRecording = true
+  voiceBtn.classList.add('recording')
+  recordingIndicator.classList.remove('hidden')
+  voiceBtn.querySelector('span').textContent = 'Listening...'
+
+  try {
+    recognition.start()
+  } catch (error) {
+    console.error('Error starting recognition:', error)
+    isRecording = false
+    voiceBtn.classList.remove('recording')
+    recordingIndicator.classList.add('hidden')
+    voiceBtn.querySelector('span').textContent = 'Tap to speak'
+  }
 }
 
 // Create the chat interface
 document.querySelector('#app').innerHTML = `
   <div class="chat-container">
     <header class="chat-header">
-      <h1>Your Therapist</h1>
+      <h1>Abby</h1>
       <p class="subtitle">Your safe space to talk</p>
     </header>
 
     <div class="messages-container" id="messages">
       <div class="message bot-message">
         <div class="message-content">
-          <p>Hello, I'm here to listen. How are you feeling today?</p>
+          <p>Hi! I'm Abby, and I'm here to listen. How are you feeling today?</p>
         </div>
       </div>
     </div>
@@ -96,7 +128,7 @@ document.querySelector('#app').innerHTML = `
           <span>Tap to speak</span>
         </button>
         <div id="recordingIndicator" class="recording-indicator hidden">
-          <span class="pulse"></span> Recording...
+          <span class="pulse"></span> Listening...
         </div>
       </div>
 
@@ -122,18 +154,79 @@ const recordingIndicator = document.querySelector('#recordingIndicator')
 
 let isRecording = false
 
-// Voice button handler
-voiceBtn.addEventListener('click', () => {
-  isRecording = !isRecording
+// Speech Recognition setup
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+let recognition = null
 
-  if (isRecording) {
-    voiceBtn.classList.add('recording')
-    recordingIndicator.classList.remove('hidden')
-    voiceBtn.querySelector('span').textContent = 'Recording...'
-  } else {
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition()
+  recognition.continuous = false
+  recognition.interimResults = true // Show real-time transcription
+  recognition.lang = 'en-US'
+
+  recognition.onresult = (event) => {
+    let interimTranscript = ''
+    let finalTranscript = ''
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript
+      } else {
+        interimTranscript += transcript
+      }
+    }
+
+    // Show interim results in text box as user speaks
+    if (interimTranscript) {
+      textInput.value = interimTranscript
+    }
+
+    // Send message only when final result is received
+    if (finalTranscript) {
+      textInput.value = finalTranscript
+      sendMessage(finalTranscript)
+    }
+  }
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error)
+    // Ignore 'no-speech' error as it's expected when auto-listening times out
+    if (event.error !== 'no-speech') {
+      console.error('Speech recognition error:', event.error)
+    }
+    isRecording = false
     voiceBtn.classList.remove('recording')
     recordingIndicator.classList.add('hidden')
     voiceBtn.querySelector('span').textContent = 'Tap to speak'
+    textInput.value = ''
+  }
+
+  recognition.onend = () => {
+    isRecording = false
+    voiceBtn.classList.remove('recording')
+    recordingIndicator.classList.add('hidden')
+    voiceBtn.querySelector('span').textContent = 'Tap to speak'
+  }
+}
+
+// Voice button handler
+voiceBtn.addEventListener('click', () => {
+  if (!recognition) {
+    alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.')
+    return
+  }
+
+  if (isRecording) {
+    // Stop listening
+    voiceBtn.classList.remove('recording')
+    recordingIndicator.classList.add('hidden')
+    voiceBtn.querySelector('span').textContent = 'Tap to speak'
+    recognition.stop()
+    isRecording = false
+  } else {
+    // Start listening
+    startListening()
   }
 })
 
