@@ -40,6 +40,27 @@ function getSessionMessages(date) {
   return sessions[date]?.messages || []
 }
 
+function startNewChat() {
+  // Just clear the UI and reset Gemini chat
+  // Don't clear local storage - messages will keep appending to today's session
+  const userName = currentUser?.displayName?.split(' ')[0] || null
+  restartChatWithUser(userName, []) // Empty history for fresh Gemini context
+
+  // Clear UI and show greeting
+  messagesContainer.innerHTML = ''
+  const greeting = currentUser
+    ? `Hi ${currentUser.displayName?.split(' ')[0]}! I'm Abby, and I'm here to listen. How are you feeling today?`
+    : `Hi! I'm Abby, and I'm here to listen. How are you feeling today?`
+
+  messagesContainer.innerHTML = `
+    <div class="message bot-message">
+      <div class="message-content">
+        <p>${greeting}</p>
+      </div>
+    </div>
+  `
+}
+
 let currentSessionDate = getTodayDate()
 let currentSessionMessages = getSessionMessages(currentSessionDate)
 
@@ -78,15 +99,21 @@ let chat = model.startChat({
   history: []
 })
 
-// Function to restart chat with user's name
-function restartChatWithUser(userName) {
+// Function to restart chat with user's name and optional history
+function restartChatWithUser(userName, history = []) {
   const updatedModel = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
     systemInstruction: getTherapistPrompt(userName)
   })
 
+  // Convert our message format to Gemini's format
+  const geminiHistory = history.map(msg => ({
+    role: msg.role === 'bot' ? 'model' : 'user',
+    parts: [{ text: msg.text }]
+  }))
+
   chat = updatedModel.startChat({
-    history: []
+    history: geminiHistory
   })
 }
 
@@ -164,6 +191,7 @@ document.querySelector('#app').innerHTML = `
         <h3>Sessions</h3>
         <button id="toggleSidebar" class="toggle-btn">×</button>
       </div>
+      <button id="newChatBtn" class="new-chat-btn">+ New session</button>
       <div class="sessions-list" id="sessionsList">
         <!-- Sessions will be populated here -->
       </div>
@@ -231,6 +259,7 @@ const sessionsSidebar = document.querySelector('#sessionsSidebar')
 const sessionsList = document.querySelector('#sessionsList')
 const menuBtn = document.querySelector('#menuBtn')
 const toggleSidebar = document.querySelector('#toggleSidebar')
+const newChatBtn = document.querySelector('#newChatBtn')
 
 let isRecording = false
 let currentUser = null
@@ -241,6 +270,16 @@ menuBtn.addEventListener('click', () => {
 })
 
 toggleSidebar.addEventListener('click', () => {
+  sessionsSidebar.classList.remove('open')
+})
+
+// New chat button handler
+newChatBtn.addEventListener('click', () => {
+  // Make sure we're on today's session
+  if (currentSessionDate !== getTodayDate()) {
+    loadSession(getTodayDate())
+  }
+  startNewChat()
   sessionsSidebar.classList.remove('open')
 })
 
@@ -294,6 +333,10 @@ function loadSession(date) {
   } else {
     headerSubtitle.textContent = formatDateDisplay(date)
   }
+
+  // Restart chat with session history
+  const userName = currentUser?.displayName?.split(' ')[0] || null
+  restartChatWithUser(userName, currentSessionMessages)
 
   // Clear and reload messages
   messagesContainer.innerHTML = ''
@@ -354,8 +397,8 @@ onAuthChange((user) => {
       headerSubtitle.textContent = `Hi, ${firstName}!`
     }
 
-    // Restart chat with user's name
-    restartChatWithUser(firstName)
+    // Restart chat with user's name and current history
+    restartChatWithUser(firstName, currentSessionMessages)
   } else {
     // User is signed out
     authBtn.textContent = 'Sign in with Google'
@@ -367,7 +410,7 @@ onAuthChange((user) => {
     }
 
     // Restart chat without user's name
-    restartChatWithUser(null)
+    restartChatWithUser(null, currentSessionMessages)
   }
 })
 

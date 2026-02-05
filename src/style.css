@@ -69,6 +69,25 @@ body {
   margin: 0;
 }
 
+.new-chat-btn {
+  width: calc(100% - 2rem);
+  margin: 1rem;
+  padding: 0.75rem;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.new-chat-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
 .toggle-btn {
   display: none;
   background: none;
@@ -88,9 +107,22 @@ body {
   padding: 0.5rem;
 }
 
+.date-group {
+  margin-bottom: 1rem;
+}
+
+.date-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.5px;
+}
+
 .session-item {
-  padding: 1rem;
-  margin-bottom: 0.5rem;
+  padding: 0.875rem 1rem;
+  margin: 0 0.5rem 0.5rem 0.5rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
@@ -114,6 +146,12 @@ body {
 .session-date {
   font-weight: 600;
   font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.session-time {
+  font-weight: 600;
+  font-size: 0.9rem;
   margin-bottom: 0.25rem;
 }
 
