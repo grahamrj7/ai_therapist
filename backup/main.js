@@ -90,7 +90,7 @@ Remember: You're Abby, the therapist providing a safe space for your client.`
 
 // Initialize the model with system instructions
 const model = genAI.getGenerativeModel({
-  model: 'gemini-3-flash-preview',
+  model: 'gemini-2.5-flash',
   systemInstruction: getTherapistPrompt()
 })
 
@@ -102,7 +102,7 @@ let chat = model.startChat({
 // Function to restart chat with user's name and optional history
 function restartChatWithUser(userName, history = []) {
   const updatedModel = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     systemInstruction: getTherapistPrompt(userName)
   })
 

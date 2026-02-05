@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FAF7F2;
+  --color-cream-dark: #F5EDE4;
+  --color-sand: #F5F0E8;
+  --color-linen: #EDE8DF;
+  
+  --color-terracotta: #D4A574;
+  --color-terracotta-light: #E8D4C0;
+  --color-terracotta-dark: #B8935F;
+  
+  --color-sage: #A8B5A0;
+  --color-blush: #E8D5D5;
+  --color-mauve: #C9B8C8;
+  
+  --color-text-primary: #2C2416;
+  --color-text-secondary: #5C4D3C;
+  --color-text-tertiary: #8B7D6B;
+  --color-text-muted: #A89B8C;
+  
+  --color-destructive: #C9897A;
+  
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-display: 'Playfair Display', Georgia, serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-linen);
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D4CFC4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A89B8C;
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: gentle-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes gentle-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Font utilities */
+.font-display {
+  font-family: var(--font-family-display);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
