@@ -6,9 +6,46 @@ import { app, analytics, signInWithGoogle, logOut, onAuthChange } from './fireba
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY)
 
+// Session Management
+function getTodayDate() {
+  const today = new Date()
+  return today.toISOString().split('T')[0] // YYYY-MM-DD format
+}
+
+function formatDateDisplay(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00')
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (dateStr === getTodayDate()) return 'Today'
+  if (dateStr === yesterday.toISOString().split('T')[0]) return 'Yesterday'
+
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function loadSessions() {
+  const sessions = localStorage.getItem('therapy_sessions')
+  return sessions ? JSON.parse(sessions) : {}
+}
+
+function saveSession(date, messages) {
+  const sessions = loadSessions()
+  sessions[date] = { date, messages, timestamp: Date.now() }
+  localStorage.setItem('therapy_sessions', JSON.stringify(sessions))
+}
+
+function getSessionMessages(date) {
+  const sessions = loadSessions()
+  return sessions[date]?.messages || []
+}
+
+let currentSessionDate = getTodayDate()
+let currentSessionMessages = getSessionMessages(currentSessionDate)
+
 // Therapist system prompt (will be updated with user's name)
 function getTherapistPrompt(userName = null) {
-  const nameContext = userName ? `The client's name is ${userName}. Use their name naturally in conversation to create a personal connection.` : ''
+  const nameContext = userName ? `The client's name is ${userName}. Use their name occasionally and naturally in conversation - not in every message, just when it feels right (like when greeting them or emphasizing a point).` : ''
 
   return `Your name is Abby. You are a compassionate and empathetic therapist named Abby.
 
@@ -121,16 +158,28 @@ function startListening() {
 
 // Create the chat interface
 document.querySelector('#app').innerHTML = `
-  <div class="chat-container">
-    <header class="chat-header">
-      <div class="header-content">
-        <div class="header-text">
-          <h1>Abby</h1>
-          <p class="subtitle" id="headerSubtitle">Your safe space to talk</p>
-        </div>
-        <button id="authBtn" class="auth-btn">Sign in with Google</button>
+  <div class="app-layout">
+    <aside class="sessions-sidebar" id="sessionsSidebar">
+      <div class="sidebar-header">
+        <h3>Sessions</h3>
+        <button id="toggleSidebar" class="toggle-btn">×</button>
       </div>
-    </header>
+      <div class="sessions-list" id="sessionsList">
+        <!-- Sessions will be populated here -->
+      </div>
+    </aside>
+
+    <div class="chat-container">
+      <header class="chat-header">
+        <div class="header-content">
+          <button id="menuBtn" class="menu-btn">☰</button>
+          <div class="header-text">
+            <h1>Abby</h1>
+            <p class="subtitle" id="headerSubtitle">Your safe space to talk</p>
+          </div>
+          <button id="authBtn" class="auth-btn">Sign in with Google</button>
+        </div>
+      </header>
 
     <div class="messages-container" id="messages">
       <div class="message bot-message">
@@ -167,6 +216,7 @@ document.querySelector('#app').innerHTML = `
       </div>
     </div>
   </div>
+  </div>
 `
 
 // Basic event handlers
@@ -177,9 +227,118 @@ const messagesContainer = document.querySelector('#messages')
 const recordingIndicator = document.querySelector('#recordingIndicator')
 const authBtn = document.querySelector('#authBtn')
 const headerSubtitle = document.querySelector('#headerSubtitle')
+const sessionsSidebar = document.querySelector('#sessionsSidebar')
+const sessionsList = document.querySelector('#sessionsList')
+const menuBtn = document.querySelector('#menuBtn')
+const toggleSidebar = document.querySelector('#toggleSidebar')
 
 let isRecording = false
 let currentUser = null
+
+// Sidebar toggle handlers
+menuBtn.addEventListener('click', () => {
+  sessionsSidebar.classList.add('open')
+})
+
+toggleSidebar.addEventListener('click', () => {
+  sessionsSidebar.classList.remove('open')
+})
+
+// Function to render sessions list
+function renderSessionsList() {
+  const sessions = loadSessions()
+  const sessionDates = Object.keys(sessions).sort().reverse() // Most recent first
+
+  if (sessionDates.length === 0) {
+    sessionsList.innerHTML = '<p class="no-sessions">No previous sessions</p>'
+    return
+  }
+
+  sessionsList.innerHTML = sessionDates
+    .map(date => {
+      const isActive = date === currentSessionDate
+      const displayDate = formatDateDisplay(date)
+      const messageCount = sessions[date].messages.length
+      return `
+        <div class="session-item ${isActive ? 'active' : ''}" data-date="${date}">
+          <div class="session-date">${displayDate}</div>
+          <div class="session-info">${messageCount} messages</div>
+        </div>
+      `
+    })
+    .join('')
+
+  // Add click handlers to session items
+  document.querySelectorAll('.session-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const date = item.dataset.date
+      loadSession(date)
+      sessionsSidebar.classList.remove('open')
+    })
+  })
+}
+
+// Function to load a specific session
+function loadSession(date) {
+  currentSessionDate = date
+  currentSessionMessages = getSessionMessages(date)
+
+  // Update header subtitle to show date
+  if (date === getTodayDate()) {
+    if (currentUser) {
+      const firstName = currentUser.displayName?.split(' ')[0] || 'there'
+      headerSubtitle.textContent = `Hi, ${firstName}!`
+    } else {
+      headerSubtitle.textContent = 'Your safe space to talk'
+    }
+  } else {
+    headerSubtitle.textContent = formatDateDisplay(date)
+  }
+
+  // Clear and reload messages
+  messagesContainer.innerHTML = ''
+
+  if (currentSessionMessages.length === 0) {
+    // Show default greeting for new session
+    const greeting = currentUser
+      ? `Hi ${currentUser.displayName?.split(' ')[0]}! I'm Abby, and I'm here to listen. How are you feeling today?`
+      : `Hi! I'm Abby, and I'm here to listen. How are you feeling today?`
+
+    messagesContainer.innerHTML = `
+      <div class="message bot-message">
+        <div class="message-content">
+          <p>${greeting}</p>
+        </div>
+      </div>
+    `
+  } else {
+    // Load saved messages
+    currentSessionMessages.forEach(msg => {
+      const msgDiv = document.createElement('div')
+      msgDiv.className = `message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`
+      msgDiv.innerHTML = `
+        <div class="message-content">
+          <p>${msg.text}</p>
+        </div>
+      `
+      messagesContainer.appendChild(msgDiv)
+    })
+  }
+
+  messagesContainer.scrollTop = messagesContainer.scrollHeight
+  renderSessionsList()
+}
+
+// Function to save a message
+function saveMessage(role, text) {
+  currentSessionMessages.push({ role, text, timestamp: Date.now() })
+  saveSession(currentSessionDate, currentSessionMessages)
+  renderSessionsList()
+}
+
+// Initialize sessions list
+renderSessionsList()
+loadSession(currentSessionDate)
 
 // Auth state observer
 onAuthChange((user) => {
@@ -189,36 +348,26 @@ onAuthChange((user) => {
     const firstName = user.displayName?.split(' ')[0] || 'there'
     authBtn.textContent = 'Sign out'
     authBtn.classList.add('signed-in')
-    headerSubtitle.textContent = `Hi, ${firstName}!`
+
+    // Update header only if viewing today's session
+    if (currentSessionDate === getTodayDate()) {
+      headerSubtitle.textContent = `Hi, ${firstName}!`
+    }
 
     // Restart chat with user's name
     restartChatWithUser(firstName)
-
-    // Clear messages and show personalized greeting
-    messagesContainer.innerHTML = `
-      <div class="message bot-message">
-        <div class="message-content">
-          <p>Hi ${firstName}! I'm Abby, and I'm here to listen. How are you feeling today?</p>
-        </div>
-      </div>
-    `
   } else {
     // User is signed out
     authBtn.textContent = 'Sign in with Google'
     authBtn.classList.remove('signed-in')
-    headerSubtitle.textContent = 'Your safe space to talk'
+
+    // Update header only if viewing today's session
+    if (currentSessionDate === getTodayDate()) {
+      headerSubtitle.textContent = 'Your safe space to talk'
+    }
 
     // Restart chat without user's name
     restartChatWithUser(null)
-
-    // Reset to default greeting
-    messagesContainer.innerHTML = `
-      <div class="message bot-message">
-        <div class="message-content">
-          <p>Hi! I'm Abby, and I'm here to listen. How are you feeling today?</p>
-        </div>
-      </div>
-    `
   }
 })
 
@@ -318,6 +467,12 @@ voiceBtn.addEventListener('click', () => {
 async function sendMessage(text) {
   if (!text.trim()) return
 
+  // Check if we're viewing an old session
+  if (currentSessionDate !== getTodayDate()) {
+    // Switch to today's session
+    loadSession(getTodayDate())
+  }
+
   // Add user message
   const userMsg = document.createElement('div')
   userMsg.className = 'message user-message'
@@ -327,6 +482,9 @@ async function sendMessage(text) {
     </div>
   `
   messagesContainer.appendChild(userMsg)
+
+  // Save user message
+  saveMessage('user', text)
 
   // Clear input
   textInput.value = ''
@@ -358,6 +516,9 @@ async function sendMessage(text) {
     // Update bot message with actual response
     botMsg.querySelector('.message-content').innerHTML = `<p>${responseText}</p>`
     messagesContainer.scrollTop = messagesContainer.scrollHeight
+
+    // Save bot response
+    saveMessage('bot', responseText)
 
     // Speak the response
     speakText(responseText)
