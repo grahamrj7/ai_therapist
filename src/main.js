@@ -1,5 +1,6 @@
 import './style.css'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { app, analytics } from './firebase'
 
 // Initialize Gemini API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
