@@ -1,15 +1,20 @@
 import './style.css'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { app, analytics } from './firebase'
+import { app, analytics, signInWithGoogle, logOut, onAuthChange } from './firebase'
 
 // Initialize Gemini API
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY)
 
-// Therapist system prompt
-const THERAPIST_PROMPT = `Your name is Abby. You are a compassionate and empathetic therapist named Abby.
+// Therapist system prompt (will be updated with user's name)
+function getTherapistPrompt(userName = null) {
+  const nameContext = userName ? `The client's name is ${userName}. Use their name naturally in conversation to create a personal connection.` : ''
+
+  return `Your name is Abby. You are a compassionate and empathetic therapist named Abby.
 
 IMPORTANT: Abby is YOUR name (the therapist), NOT the client's name. The person you're talking to is your client/patient. Do not call them Abby.
+
+${nameContext}
 
 Your role is to:
 - Listen actively and provide supportive responses
@@ -23,17 +28,30 @@ Your role is to:
 - Never refer to yourself as an AI or artificial - you're simply Abby, a therapist here to help
 
 Remember: You're Abby, the therapist providing a safe space for your client.`
+}
 
 // Initialize the model with system instructions
 const model = genAI.getGenerativeModel({
   model: 'gemini-2.5-flash',
-  systemInstruction: THERAPIST_PROMPT
+  systemInstruction: getTherapistPrompt()
 })
 
 // Initialize chat session
 let chat = model.startChat({
   history: []
 })
+
+// Function to restart chat with user's name
+function restartChatWithUser(userName) {
+  const updatedModel = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    systemInstruction: getTherapistPrompt(userName)
+  })
+
+  chat = updatedModel.startChat({
+    history: []
+  })
+}
 
 // Text-to-Speech setup
 const synth = window.speechSynthesis
@@ -105,8 +123,13 @@ function startListening() {
 document.querySelector('#app').innerHTML = `
   <div class="chat-container">
     <header class="chat-header">
-      <h1>Abby</h1>
-      <p class="subtitle">Your safe space to talk</p>
+      <div class="header-content">
+        <div class="header-text">
+          <h1>Abby</h1>
+          <p class="subtitle" id="headerSubtitle">Your safe space to talk</p>
+        </div>
+        <button id="authBtn" class="auth-btn">Sign in with Google</button>
+      </div>
     </header>
 
     <div class="messages-container" id="messages">
@@ -152,8 +175,68 @@ const sendBtn = document.querySelector('#sendBtn')
 const textInput = document.querySelector('#textInput')
 const messagesContainer = document.querySelector('#messages')
 const recordingIndicator = document.querySelector('#recordingIndicator')
+const authBtn = document.querySelector('#authBtn')
+const headerSubtitle = document.querySelector('#headerSubtitle')
 
 let isRecording = false
+let currentUser = null
+
+// Auth state observer
+onAuthChange((user) => {
+  currentUser = user
+  if (user) {
+    // User is signed in
+    const firstName = user.displayName?.split(' ')[0] || 'there'
+    authBtn.textContent = 'Sign out'
+    authBtn.classList.add('signed-in')
+    headerSubtitle.textContent = `Hi, ${firstName}!`
+
+    // Restart chat with user's name
+    restartChatWithUser(firstName)
+
+    // Clear messages and show personalized greeting
+    messagesContainer.innerHTML = `
+      <div class="message bot-message">
+        <div class="message-content">
+          <p>Hi ${firstName}! I'm Abby, and I'm here to listen. How are you feeling today?</p>
+        </div>
+      </div>
+    `
+  } else {
+    // User is signed out
+    authBtn.textContent = 'Sign in with Google'
+    authBtn.classList.remove('signed-in')
+    headerSubtitle.textContent = 'Your safe space to talk'
+
+    // Restart chat without user's name
+    restartChatWithUser(null)
+
+    // Reset to default greeting
+    messagesContainer.innerHTML = `
+      <div class="message bot-message">
+        <div class="message-content">
+          <p>Hi! I'm Abby, and I'm here to listen. How are you feeling today?</p>
+        </div>
+      </div>
+    `
+  }
+})
+
+// Auth button handler
+authBtn.addEventListener('click', async () => {
+  try {
+    if (currentUser) {
+      // Sign out
+      await logOut()
+    } else {
+      // Sign in with Google
+      await signInWithGoogle()
+    }
+  } catch (error) {
+    console.error('Auth error:', error)
+    alert('Authentication failed. Please try again.')
+  }
+})
 
 // Speech Recognition setup
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
