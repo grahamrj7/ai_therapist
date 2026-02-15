@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { SettingsDialog } from "@/components/layout/SettingsDialog"
 import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
+import { TTSPrompt } from "@/components/TTSPrompt"
 import { useChat } from "@/hooks/useChat"
 import { useAuth } from "@/hooks/useAuth"
 import { useSettings } from "@/hooks/useSettings"
@@ -12,7 +13,7 @@ import "@/styles/globals.css"
 
 function App() {
   const { user, signIn, signOut } = useAuth()
-  const { settings, updateTherapistName, setTTSEnabled } = useSettings()
+  const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt } = useSettings()
 
   const {
     sessions,
@@ -29,6 +30,7 @@ function App() {
     setInterimText,
   } = useChat({ therapistName: settings.therapistName })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
   const { speak, enabled: ttsEnabled } = useTextToSpeech()
@@ -37,6 +39,16 @@ function App() {
   useEffect(() => {
     // This will be handled by the hook's internal state
   }, [settings.ttsEnabled])
+
+  // Show TTS prompt on first load after a delay
+  useEffect(() => {
+    if (!settings.hasSeenTTSPrompt && !settings.ttsEnabled) {
+      const timer = setTimeout(() => {
+        setShowTTSPrompt(true)
+      }, 3000) // Show after 3 seconds
+      return () => clearTimeout(timer)
+    }
+  }, [settings.hasSeenTTSPrompt, settings.ttsEnabled])
 
   // Speak bot messages when they arrive
   useEffect(() => {
@@ -51,6 +63,22 @@ function App() {
       }
     }
   }, [messages, isTyping, settings.ttsEnabled, speak])
+
+  const handleTTSPromptEnable = () => {
+    setTTSEnabled(true)
+    setHasSeenTTSPrompt(true)
+    setShowTTSPrompt(false)
+  }
+
+  const handleTTSPromptDismiss = () => {
+    setHasSeenTTSPrompt(true)
+    setShowTTSPrompt(false)
+  }
+
+  const handleTTSPromptNeverAsk = () => {
+    setHasSeenTTSPrompt(true)
+    setShowTTSPrompt(false)
+  }
 
   const handleSpeechResult = (transcript: string) => {
     sendMessage(transcript)
@@ -130,6 +158,13 @@ function App() {
         onTherapistNameChange={updateTherapistName}
         ttsEnabled={settings.ttsEnabled}
         onTTSEnabledChange={setTTSEnabled}
+      />
+
+      <TTSPrompt
+        isOpen={showTTSPrompt}
+        onEnable={handleTTSPromptEnable}
+        onDismiss={handleTTSPromptDismiss}
+        onNeverAsk={handleTTSPromptNeverAsk}
       />
     </>
   )
