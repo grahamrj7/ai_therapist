@@ -101,7 +101,7 @@ export function SettingsDialog({
           return
         }
 
-        const utterance = new SpeechSynthesisUtterance('This is a test. Can you hear me?')
+        const utterance = new SpeechSynthesisUtterance(`This is a test. I am ${therapistName}. Can you hear me?`)
         
         // Use a local voice if available (more reliable in Chrome)
         const localVoice = voices.find(v => 
