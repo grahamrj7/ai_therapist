@@ -6,9 +6,12 @@ interface HeaderProps {
   onMenuClick?: () => void
   onSettingsClick?: () => void
   subtitle?: string
+  therapistName?: string
 }
 
-export function Header({ onMenuClick, onSettingsClick, subtitle }: HeaderProps) {
+export function Header({ onMenuClick, onSettingsClick, subtitle, therapistName = "Abby" }: HeaderProps) {
+  const initial = therapistName.charAt(0).toUpperCase()
+
   return (
     <header className="h-[72px] bg-cream border-b border-linen flex items-center px-6 justify-between shrink-0">
       <div className="flex items-center gap-4">
@@ -19,16 +22,16 @@ export function Header({ onMenuClick, onSettingsClick, subtitle }: HeaderProps) 
         >
           <Menu className="h-5 w-5 text-text-secondary" />
         </button>
-        
+
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 shadow-soft">
             <AvatarFallback className="bg-gradient-to-br from-terracotta to-terracotta-dark text-white text-sm font-semibold">
-              A
+              {initial}
             </AvatarFallback>
           </Avatar>
-          
+
           <div>
-            <h2 className="font-display text-xl text-text-primary">Abby - Your AI Therapist</h2>
+            <h2 className="font-display text-xl text-text-primary">{therapistName} - Your AI Therapist</h2>
             <p className="text-sm text-text-muted">
               {subtitle || "Here to listen"}
             </p>

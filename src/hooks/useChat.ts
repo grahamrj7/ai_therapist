@@ -12,14 +12,14 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9)
 }
 
-function getTherapistPrompt(userName?: string): string {
-  const nameContext = userName 
-    ? `The client's name is ${userName}. Use their name occasionally and naturally in conversation.` 
+function getTherapistPrompt(userName?: string, therapistName: string = "Abby"): string {
+  const nameContext = userName
+    ? `The client's name is ${userName}. Use their name occasionally and naturally in conversation.`
     : ''
 
-  return `Your name is Abby. You are a compassionate and empathetic therapist.
+  return `Your name is ${therapistName}. You are a compassionate and empathetic therapist.
 
-IMPORTANT: Abby is YOUR name (the therapist), NOT the client's name.
+IMPORTANT: ${therapistName} is YOUR name (the therapist), NOT the client's name.
 
 ${nameContext}
 
@@ -28,16 +28,21 @@ Your role is to:
 - Ask thoughtful follow-up questions to help users explore their feelings
 - Validate emotions without judgment
 - Offer gentle insights and coping strategies when appropriate
-- Maintain a warm, professional, and caring tone
+n- Maintain a warm, professional, and caring tone
 - Keep responses concise (2-4 sentences typically)
 - Never diagnose conditions or replace professional mental health care
 - Encourage seeking professional help for serious concerns
-- Never refer to yourself as an AI - you're simply Abby, a therapist here to help
+- Never refer to yourself as an AI - you're simply ${therapistName}, a therapist here to help
 
-Remember: You're Abby, the therapist providing a safe space for your client.`
+Remember: You're ${therapistName}, the therapist providing a safe space for your client.`
 }
 
-export function useChat() {
+interface UseChatOptions {
+  therapistName?: string
+}
+
+export function useChat(options: UseChatOptions = {}) {
+  const { therapistName = "Abby" } = options
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string>("")
   const [messages, setMessages] = useState<Message[]>([])
@@ -51,9 +56,15 @@ export function useChat() {
   useEffect(() => {
     if (API_KEY) {
       genAIRef.current = new GoogleGenerativeAI(API_KEY)
-      initializeChat()
     }
   }, [])
+
+  // Initialize or re-initialize chat when therapistName changes
+  useEffect(() => {
+    if (genAIRef.current) {
+      initializeChat(messages)
+    }
+  }, [therapistName])
 
   // Load sessions from localStorage
   useEffect(() => {
@@ -62,7 +73,7 @@ export function useChat() {
       const parsed = JSON.parse(savedSessions)
       const sessionsArray = Object.values(parsed) as Session[]
       setSessions(sessionsArray.sort((a, b) => b.timestamp - a.timestamp))
-      
+
       // Set current session to today or most recent
       const today = getTodayDate()
       const todaySession = sessionsArray.find(s => s.date === today)
@@ -80,10 +91,10 @@ export function useChat() {
 
   const initializeChat = (history: Message[] = []) => {
     if (!genAIRef.current) return
-    
+
     const model = genAIRef.current.getGenerativeModel({
       model: "gemini-2.5-flash",
-      systemInstruction: getTherapistPrompt(),
+      systemInstruction: getTherapistPrompt(undefined, therapistName),
     })
 
     const geminiHistory = history.map(msg => ({

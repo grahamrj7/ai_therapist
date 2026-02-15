@@ -5,11 +5,14 @@ import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
 import { useChat } from "@/hooks/useChat"
 import { useAuth } from "@/hooks/useAuth"
+import { useSettings } from "@/hooks/useSettings"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
-import { useTextToSpeech } from "@/hooks/useTextToSpeech"
 import "@/styles/globals.css"
 
 function App() {
+  const { user, signIn, signOut } = useAuth()
+  const { settings, updateTherapistName } = useSettings()
+
   const {
     sessions,
     currentSessionId,
@@ -23,12 +26,8 @@ function App() {
     createNewSession,
     selectSession,
     setInterimText,
-  } = useChat()
-
-  const { user, signIn, signOut } = useAuth()
+  } = useChat({ therapistName: settings.therapistName })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
-  const { speak, stop } = useTextToSpeech()
 
   const handleSpeechResult = (transcript: string) => {
     sendMessage(transcript)
@@ -43,14 +42,6 @@ function App() {
     supported: speechSupported,
   } = useSpeechRecognition(handleSpeechResult)
 
-  // Speak bot messages when they arrive
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1]
-    if (lastMessage?.role === "bot" && !isTyping && lastMessage.content) {
-      speak(lastMessage.content)
-    }
-  }, [messages, isTyping, speak])
-
   // Update interim text from speech recognition
   useEffect(() => {
     if (interimTranscript) {
@@ -59,7 +50,6 @@ function App() {
   }, [interimTranscript, setInterimText])
 
   const handleSendMessage = (content: string) => {
-    stop() // Stop any ongoing speech
     sendMessage(content)
   }
 
@@ -72,7 +62,6 @@ function App() {
     if (isRecording) {
       stopRecording()
     } else {
-      stop() // Stop any ongoing speech
       startRecording()
     }
   }
@@ -98,6 +87,7 @@ function App() {
         onSignOut={signOut}
         onSignIn={signIn}
         onSettingsClick={() => setIsSettingsOpen(true)}
+        therapistName={settings.therapistName}
       >
         <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} />
         <InputArea
@@ -113,6 +103,8 @@ function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onClearData={handleClearData}
+        therapistName={settings.therapistName}
+        onTherapistNameChange={updateTherapistName}
       />
     </>
   )

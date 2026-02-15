@@ -21,19 +21,21 @@ interface AppLayoutProps {
   onSignOut?: () => void
   onSignIn?: () => void
   onSettingsClick?: () => void
+  therapistName?: string
 }
 
-export function AppLayout({ 
-  children, 
-  sessions, 
-  currentSessionId, 
-  onSelectSession, 
+export function AppLayout({
+  children,
+  sessions,
+  currentSessionId,
+  onSelectSession,
   onNewSession,
   headerSubtitle,
   user,
   onSignOut,
   onSignIn,
-  onSettingsClick
+  onSettingsClick,
+  therapistName,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -68,10 +70,11 @@ export function AppLayout({
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 bg-cream">
-        <Header 
-          onMenuClick={() => setSidebarOpen(true)} 
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
           onSettingsClick={onSettingsClick}
           subtitle={headerSubtitle}
+          therapistName={therapistName}
         />
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {children}

@@ -1,21 +1,35 @@
 import { useState } from "react"
-import { X, Trash2, AlertTriangle } from "lucide-react"
+import { X, Trash2, AlertTriangle, User } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 interface SettingsDialogProps {
   isOpen: boolean
   onClose: () => void
   onClearData: () => void
+  therapistName: string
+  onTherapistNameChange: (name: string) => void
 }
 
-export function SettingsDialog({ isOpen, onClose, onClearData }: SettingsDialogProps) {
+export function SettingsDialog({
+  isOpen,
+  onClose,
+  onClearData,
+  therapistName,
+  onTherapistNameChange,
+}: SettingsDialogProps) {
   const [showConfirm, setShowConfirm] = useState(false)
+  const [nameInput, setNameInput] = useState(therapistName)
 
   const handleClearData = () => {
     onClearData()
     setShowConfirm(false)
     onClose()
+  }
+
+  const handleSaveName = () => {
+    onTherapistNameChange(nameInput)
   }
 
   return (
@@ -51,6 +65,32 @@ export function SettingsDialog({ isOpen, onClose, onClearData }: SettingsDialogP
 
             {/* Content */}
             <div className="p-6 space-y-6">
+              {/* Therapist Name Section */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-text-primary">Therapist Name</h3>
+                <p className="text-sm text-text-muted">
+                  Customize your therapist's name. This is what they'll be called during your conversations.
+                </p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                    <Input
+                      type="text"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      placeholder="Enter therapist name"
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button onClick={handleSaveName} size="sm">
+                    Save
+                  </Button>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-linen" />
+
               {/* Clear Data Section */}
               <div className="space-y-3">
                 <h3 className="font-medium text-text-primary">Data Management</h3>

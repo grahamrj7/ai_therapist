@@ -18,3 +18,7 @@ export interface User {
   email: string | null
   photoURL: string | null
 }
+
+export interface UserSettings {
+  therapistName: string
+}
