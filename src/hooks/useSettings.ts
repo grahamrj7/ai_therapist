@@ -5,6 +5,8 @@ const SETTINGS_KEY = "therapy_settings"
 
 const defaultSettings: UserSettings = {
   therapistName: "Abby",
+  ttsEnabled: false,
+  hasSeenTTSPrompt: false,
 }
 
 export function useSettings() {
@@ -36,9 +38,19 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, therapistName: name || "Abby" }))
   }, [])
 
+  const setTTSEnabled = useCallback((enabled: boolean) => {
+    setSettings((prev) => ({ ...prev, ttsEnabled: enabled }))
+  }, [])
+
+  const setHasSeenTTSPrompt = useCallback((seen: boolean) => {
+    setSettings((prev) => ({ ...prev, hasSeenTTSPrompt: seen }))
+  }, [])
+
   return {
     settings,
     isLoaded,
     updateTherapistName,
+    setTTSEnabled,
+    setHasSeenTTSPrompt,
   }
 }

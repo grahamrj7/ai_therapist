@@ -10,6 +10,8 @@ interface SettingsDialogProps {
   onClearData: () => void
   therapistName: string
   onTherapistNameChange: (name: string) => void
+  ttsEnabled: boolean
+  onTTSEnabledChange: (enabled: boolean) => void
 }
 
 export function SettingsDialog({
@@ -18,6 +20,8 @@ export function SettingsDialog({
   onClearData,
   therapistName,
   onTherapistNameChange,
+  ttsEnabled,
+  onTTSEnabledChange,
 }: SettingsDialogProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [nameInput, setNameInput] = useState(therapistName)
@@ -85,6 +89,32 @@ export function SettingsDialog({
                   <Button onClick={handleSaveName} size="sm">
                     Save
                   </Button>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-linen" />
+
+              {/* Voice Responses Section */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-text-primary">Voice Responses</h3>
+                <p className="text-sm text-text-muted">
+                  Enable your therapist to speak responses aloud.
+                </p>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-text-secondary">Enable voice</span>
+                  <button
+                    onClick={() => onTTSEnabledChange(!ttsEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      ttsEnabled ? 'bg-terracotta' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        ttsEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
 
