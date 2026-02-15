@@ -135,13 +135,14 @@ function App() {
         onSettingsClick={() => setIsSettingsOpen(true)}
         therapistName={settings.therapistName}
       >
-        <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} />
+        <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} therapistName={settings.therapistName} />
         <InputArea
           onSendMessage={handleSendMessage}
           isTyping={isTyping}
           isRecording={isRecording}
           onToggleRecording={handleToggleRecording}
           interimText={interimTranscript}
+          therapistName={settings.therapistName}
         />
       </AppLayout>
 

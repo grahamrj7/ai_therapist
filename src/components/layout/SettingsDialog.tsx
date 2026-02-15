@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, Trash2, AlertTriangle, User, Volume2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,13 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [nameInput, setNameInput] = useState(therapistName)
+
+  // Update input when dialog opens or therapistName changes
+  useEffect(() => {
+    if (isOpen) {
+      setNameInput(therapistName)
+    }
+  }, [isOpen, therapistName])
 
   const handleClearData = () => {
     onClearData()

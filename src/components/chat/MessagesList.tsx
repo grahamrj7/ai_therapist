@@ -8,9 +8,10 @@ interface MessagesListProps {
   messages: Message[]
   isTyping?: boolean
   isFreshChat?: boolean
+  therapistName?: string
 }
 
-export function MessagesList({ messages, isTyping, isFreshChat }: MessagesListProps) {
+export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby" }: MessagesListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export function MessagesList({ messages, isTyping, isFreshChat }: MessagesListPr
         {isTyping && <TypingIndicator />}
       </AnimatePresence>
       
-      {/* Show greeting from Abby in fresh chat mode */}
+      {/* Show greeting from therapist in fresh chat mode */}
       {isFreshChat && messages.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -40,10 +41,10 @@ export function MessagesList({ messages, isTyping, isFreshChat }: MessagesListPr
           className="flex gap-3"
         >
           <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center shadow-soft">
-            <span className="text-white text-sm font-semibold">A</span>
+            <span className="text-white text-sm font-semibold">{therapistName.charAt(0).toUpperCase()}</span>
           </div>
           <div className="max-w-[75%] px-5 py-3.5 text-[15px] leading-relaxed shadow-soft bg-white text-text-primary border border-linen rounded-2xl rounded-tl-sm">
-            Hi from your therapist, Abby. I'm here to listen and support you. How are you feeling today?
+            Hi from your therapist, {therapistName}. I'm here to listen and support you. How are you feeling today?
           </div>
         </motion.div>
       )}

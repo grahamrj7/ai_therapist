@@ -12,6 +12,7 @@ interface InputAreaProps {
   isRecording?: boolean
   onToggleRecording?: () => void
   interimText?: string
+  therapistName?: string
 }
 
 const QUICK_ACTIONS = [
@@ -26,7 +27,8 @@ export function InputArea({
   isTyping, 
   isRecording, 
   onToggleRecording,
-  interimText 
+  interimText,
+  therapistName = "Abby"
 }: InputAreaProps) {
   const [input, setInput] = useState("")
   const [showQuickActions, setShowQuickActions] = useState(true)
@@ -110,7 +112,7 @@ export function InputArea({
       </div>
 
       <p className="text-center text-xs text-text-muted">
-        Abby is here to listen and support you. For emergencies, please contact emergency services.
+        {therapistName} is here to listen and support you. For emergencies, please contact emergency services.
       </p>
     </div>
   )
