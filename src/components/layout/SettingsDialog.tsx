@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { X, Trash2, AlertTriangle, User } from "lucide-react"
+import { X, Trash2, AlertTriangle, User, Volume2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +34,130 @@ export function SettingsDialog({
 
   const handleSaveName = () => {
     onTherapistNameChange(nameInput)
+  }
+
+  const playTestTone = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.value = 440
+      oscillator.type = 'sine'
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 1)
+
+      console.log('Test tone played successfully')
+    } catch (error) {
+      console.error('Failed to play test tone:', error)
+      alert('Audio test failed. Please check your browser audio settings.')
+    }
+  }
+
+  const playTestSpeech = () => {
+    try {
+      console.log('[Test Speech] Starting test...')
+      const synth = window.speechSynthesis
+      if (!synth) {
+        console.error('[Test Speech] Speech synthesis not supported')
+        alert('Speech synthesis not supported in this browser')
+        return
+      }
+
+      console.log('[Test Speech] Browser:', navigator.userAgent)
+      
+      // CRITICAL CHROME FIX: Resume audio context first
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+      if (AudioContext) {
+        const audioCtx = new AudioContext()
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume()
+        }
+      }
+
+      // Chrome fix: Always cancel first to clear any stuck state
+      synth.cancel()
+      
+      // Small delay after cancel
+      setTimeout(() => {
+        console.log('[Test Speech] Synth state after cancel:', {
+          speaking: synth.speaking,
+          pending: synth.pending,
+          paused: synth.paused
+        })
+
+        const voices = synth.getVoices()
+        console.log('[Test Speech] Available voices:', voices.length)
+
+        if (voices.length === 0) {
+          console.error('[Test Speech] No voices available!')
+          alert('No speech voices available.')
+          return
+        }
+
+        const utterance = new SpeechSynthesisUtterance('This is a test. Can you hear me?')
+        
+        // Use a local voice if available (more reliable in Chrome)
+        const localVoice = voices.find(v => 
+          v.lang.startsWith('en') && v.localService === true
+        )
+        
+        const preferredVoice = localVoice || voices.find(v =>
+          v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Karen'))
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0]
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice
+          console.log('[Test Speech] Using voice:', preferredVoice.name, 'local:', preferredVoice.localService)
+        }
+
+        utterance.rate = 1
+        utterance.pitch = 1
+        utterance.volume = 1
+
+        let hasStarted = false
+        
+        utterance.onstart = () => {
+          hasStarted = true
+          console.log('[Test Speech] ✅ Started successfully')
+        }
+        
+        utterance.onend = () => {
+          console.log('[Test Speech] ✅ Ended successfully')
+        }
+        
+        utterance.onerror = (event) => {
+          if (!hasStarted && event.error === 'canceled') {
+            console.log('[Test Speech] ⚠️ Canceled before starting - Chrome autoplay blocked')
+            alert('Speech blocked by Chrome. Try clicking directly on this button (not the Settings dialog), or refresh and try again.')
+          } else {
+            console.error('[Test Speech] ❌ Error:', event.error, 'charIndex:', event.charIndex, 'elapsed:', event.elapsedTime)
+          }
+        }
+
+        console.log('[Test Speech] Calling synth.speak()...')
+        synth.speak(utterance)
+        
+        // Chrome keep-alive: speak empty string every 10 seconds
+        const keepAlive = setInterval(() => {
+          if (!synth.speaking) {
+            clearInterval(keepAlive)
+          } else {
+            synth.pause()
+            synth.resume()
+          }
+        }, 10000)
+      }, 100)
+
+    } catch (error) {
+      console.error('[Test Speech] Exception:', error)
+    }
   }
 
   return (
@@ -115,6 +239,28 @@ export function SettingsDialog({
                       }`}
                     />
                   </button>
+                </div>
+                
+                {/* Test buttons */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={playTestTone}
+                    className="flex-1"
+                  >
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    Test Tone
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={playTestSpeech}
+                    className="flex-1"
+                  >
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    Test Speech
+                  </Button>
                 </div>
               </div>
 

@@ -1,18 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 
+interface UseTextToSpeechOptions {
+  enabled?: boolean
+}
+
 interface UseTextToSpeechReturn {
   speak: (text: string) => void
   stop: () => void
   isSpeaking: boolean
-  enabled: boolean
-  setEnabled: (enabled: boolean) => void
   supported: boolean
 }
 
-export function useTextToSpeech(): UseTextToSpeechReturn {
+export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextToSpeechReturn {
+  const { enabled = false } = options
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [enabled, setEnabled] = useState(false)
   const [supported, setSupported] = useState(true)
+  const enabledRef = useRef(enabled)
+  
+  // Keep enabled ref in sync
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null)
   const queueRef = useRef<string[]>([])
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
@@ -51,7 +59,7 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
 
   // Process queue
   const processQueue = useCallback(() => {
-    if (!enabled || isSpeaking || queueRef.current.length === 0) return
+    if (!enabledRef.current || isSpeaking || queueRef.current.length === 0) return
 
     const text = queueRef.current.shift()
     if (!text) return
@@ -93,19 +101,30 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
   }, [enabled, isSpeaking])
 
   const speak = useCallback((text: string) => {
-    if (!enabled) return
+    if (!enabledRef.current) {
+      console.log("[TTS] Speak called but TTS is disabled")
+      return
+    }
     
     const synth = window.speechSynthesis
-    if (!synth) return
+    if (!synth) {
+      console.log("[TTS] Speech synthesis not available")
+      return
+    }
 
+    console.log("[TTS] Adding to queue:", text.substring(0, 50) + "...")
+    
     // Add to queue
     queueRef.current.push(text)
     
     // Start processing if not already speaking
     if (!isSpeaking) {
+      console.log("[TTS] Starting queue processing")
       processQueue()
+    } else {
+      console.log("[TTS] Already speaking, queued message")
     }
-  }, [enabled, isSpeaking, processQueue])
+  }, [isSpeaking, processQueue])
 
   const stop = useCallback(() => {
     const synth = window.speechSynthesis
@@ -121,8 +140,6 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
     speak,
     stop,
     isSpeaking,
-    enabled,
-    setEnabled,
     supported,
   }
 }

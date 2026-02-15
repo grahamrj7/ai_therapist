@@ -33,12 +33,7 @@ function App() {
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
-  const { speak, enabled: ttsEnabled } = useTextToSpeech()
-
-  // Sync TTS enabled state with settings
-  useEffect(() => {
-    // This will be handled by the hook's internal state
-  }, [settings.ttsEnabled])
+  const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled })
 
   // Show TTS prompt on first load after a delay
   useEffect(() => {
