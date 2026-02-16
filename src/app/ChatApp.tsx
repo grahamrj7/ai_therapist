@@ -4,6 +4,7 @@ import { SettingsDialog } from "@/components/layout/SettingsDialog"
 import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
 import { TTSPrompt } from "@/components/TTSPrompt"
+import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
 import { useAuth } from "@/hooks/useAuth"
 import { useSettings } from "@/hooks/useSettings"
@@ -12,7 +13,7 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech"
 
 export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
-  const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt } = useSettings()
+  const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt, completeOnboarding, isLoaded } = useSettings()
 
   const {
     sessions,
@@ -114,6 +115,15 @@ export function ChatApp() {
     setSessions([])
     setMessages([])
     setCurrentSessionId('')
+  }
+
+  const handleOnboardingComplete = (name: string, tts: boolean) => {
+    completeOnboarding(name, tts)
+  }
+
+  // Show onboarding if settings haven't loaded yet or onboarding isn't complete
+  if (!isLoaded || !settings.hasCompletedOnboarding) {
+    return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
   return (

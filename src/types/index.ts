@@ -23,4 +23,5 @@ export interface UserSettings {
   therapistName: string
   ttsEnabled: boolean
   hasSeenTTSPrompt: boolean
+  hasCompletedOnboarding: boolean
 }

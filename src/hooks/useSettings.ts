@@ -7,6 +7,7 @@ const defaultSettings: UserSettings = {
   therapistName: "Abby",
   ttsEnabled: false,
   hasSeenTTSPrompt: false,
+  hasCompletedOnboarding: false,
 }
 
 export function useSettings() {
@@ -46,11 +47,32 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, hasSeenTTSPrompt: seen }))
   }, [])
 
+  const setHasCompletedOnboarding = useCallback((completed: boolean) => {
+    setSettings((prev) => ({ ...prev, hasCompletedOnboarding: completed }))
+  }, [])
+
+  const completeOnboarding = useCallback((name: string, ttsEnabled: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      therapistName: name || "Abby",
+      ttsEnabled,
+      hasCompletedOnboarding: true,
+    }))
+  }, [])
+
+  const resetSettings = useCallback(() => {
+    localStorage.removeItem(SETTINGS_KEY)
+    setSettings(defaultSettings)
+  }, [])
+
   return {
     settings,
     isLoaded,
     updateTherapistName,
     setTTSEnabled,
     setHasSeenTTSPrompt,
+    setHasCompletedOnboarding,
+    completeOnboarding,
+    resetSettings,
   }
 }
