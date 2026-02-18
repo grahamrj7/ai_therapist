@@ -86,6 +86,15 @@ export function useChat(options: UseChatOptions = {}) {
         setMessages(sessionsArray[0].messages)
         initializeChat(sessionsArray[0].messages)
       }
+    } else {
+      // No saved sessions - show welcome message for fresh start
+      const welcomeMessage: Message = {
+        id: generateId(),
+        role: "bot",
+        content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
+        timestamp: Date.now(),
+      }
+      setMessages([welcomeMessage])
     }
   }, [])
 
@@ -235,18 +244,33 @@ export function useChat(options: UseChatOptions = {}) {
   }, [messages, sessions, currentSessionId, isFreshChat, saveSessions])
 
   const createNewSession = useCallback(() => {
-    // Clear UI and reset chat context, but don't create a new session entry
-    setMessages([])
-    setIsFreshChat(true)
-    initializeChat([])
-    
-    // Set current session to today's session if it exists
+    // Check if today already has a session with messages
     const today = getTodayDate()
     const todaySession = sessions.find(s => s.date === today)
-    if (todaySession) {
+    
+    if (todaySession && todaySession.messages.length > 0) {
+      // Use existing today's session
       setCurrentSessionId(todaySession.id)
+      setMessages(todaySession.messages)
+      setIsFreshChat(false)
+      initializeChat(todaySession.messages)
+    } else {
+      // Start fresh with welcome message
+      const welcomeMessage: Message = {
+        id: generateId(),
+        role: "bot",
+        content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
+        timestamp: Date.now(),
+      }
+      setMessages([welcomeMessage])
+      setIsFreshChat(false)
+      initializeChat([welcomeMessage])
+      
+      if (todaySession) {
+        setCurrentSessionId(todaySession.id)
+      }
     }
-  }, [sessions])
+  }, [sessions, therapistName])
 
   const selectSession = useCallback((sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId)
