@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react"
-import { X, Trash2, AlertTriangle, User, Volume2 } from "lucide-react"
+import { X, Trash2, AlertTriangle, User, Volume2, Mic } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+
+interface VoiceOption {
+  name: string
+  lang: string
+  local: boolean
+}
 
 interface SettingsDialogProps {
   isOpen: boolean
@@ -12,6 +18,8 @@ interface SettingsDialogProps {
   onTherapistNameChange: (name: string) => void
   ttsEnabled: boolean
   onTTSEnabledChange: (enabled: boolean) => void
+  voiceName?: string
+  onVoiceChange?: (voiceName: string) => void
 }
 
 export function SettingsDialog({
@@ -22,9 +30,18 @@ export function SettingsDialog({
   onTherapistNameChange,
   ttsEnabled,
   onTTSEnabledChange,
+  voiceName,
+  onVoiceChange,
 }: SettingsDialogProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [nameInput, setNameInput] = useState(therapistName)
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([])
+  
+  // Allowed voices - must be exact matches from this list only
+  const allowedVoiceNames = [
+    'Moira', 'Daniel', 'Eddy', 'Flo', 'Karen', 
+    'Ralph', 'Reed', 'Samantha', 'Google US English'
+  ]
 
   // Update input when dialog opens or therapistName changes
   useEffect(() => {
@@ -32,6 +49,44 @@ export function SettingsDialog({
       setNameInput(therapistName)
     }
   }, [isOpen, therapistName])
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const synth = window.speechSynthesis
+      if (synth) {
+        const voices = synth.getVoices()
+        
+        // Filter to only English voices that contain one of the allowed names
+        const filteredVoices = voices
+          .filter(v => {
+            // Must be English
+            if (!v.lang.startsWith('en')) return false
+            
+            // Must match one of the allowed voice names
+            return allowedVoiceNames.some(allowed => v.name.includes(allowed))
+          })
+          .map(v => ({
+            name: v.name,
+            lang: v.lang,
+            local: v.localService
+          }))
+        
+        // Remove duplicates by name
+        const uniqueVoices = filteredVoices.filter((voice, index, self) => 
+          index === self.findIndex((v) => v.name === voice.name)
+        )
+        
+        setAvailableVoices(uniqueVoices)
+      }
+    }
+
+    loadVoices()
+    
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices
+    }
+  }, [])
 
   const handleClearData = () => {
     onClearData()
@@ -41,6 +96,21 @@ export function SettingsDialog({
 
   const handleSaveName = () => {
     onTherapistNameChange(nameInput)
+  }
+
+  const previewVoice = (voiceName: string) => {
+    const synth = window.speechSynthesis
+    if (!synth) return
+
+    synth.cancel()
+    
+    const utterance = new SpeechSynthesisUtterance(`Hi, I'm ${therapistName}. This is how I'll sound.`)
+    const voice = synth.getVoices().find(v => v.name === voiceName)
+    if (voice) {
+      utterance.voice = voice
+    }
+    
+    synth.speak(utterance)
   }
 
   const playTestTone = () => {
@@ -269,6 +339,44 @@ export function SettingsDialog({
                     Test Speech
                   </Button>
                 </div>
+
+                {/* Voice Selection - only show when TTS is enabled */}
+                {ttsEnabled && availableVoices.length > 0 && onVoiceChange && (
+                  <div className="space-y-3 pt-4 border-t border-linen">
+                    <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                      <Mic className="h-4 w-4 text-terracotta" />
+                      Voice
+                    </label>
+                    <div className="max-h-40 overflow-y-auto space-y-1 border border-linen rounded-lg p-2">
+                      {availableVoices.map((voice) => (
+                        <div
+                          key={voice.name}
+                          onClick={() => onVoiceChange(voice.name)}
+                          className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
+                            voiceName === voice.name
+                              ? 'bg-terracotta/10 border border-terracotta'
+                              : 'hover:bg-cream border border-transparent'
+                          }`}
+                        >
+                          <div>
+                            <p className="font-medium text-text-primary text-sm">{voice.name}</p>
+                            <p className="text-xs text-text-muted">{voice.lang}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              previewVoice(voice.name)
+                            }}
+                            className="p-1.5 hover:bg-white rounded-full transition-colors"
+                            title="Preview voice"
+                          >
+                            <Volume2 className="h-4 w-4 text-terracotta" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Divider */}

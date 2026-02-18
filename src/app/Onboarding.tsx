@@ -21,8 +21,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([])
   const [step, setStep] = useState(1)
 
-  // Allowed voices
-  const allowedVoices = [
+  // Allowed voices - must be exact matches from this list only
+  const allowedVoiceNames = [
     'Moira',
     'Daniel', 
     'Eddy',
@@ -39,19 +39,33 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       const synth = window.speechSynthesis
       if (synth) {
         const voices = synth.getVoices()
+        
+        // Filter to only English voices that contain one of the allowed names
         const filteredVoices = voices
-          .filter(v => allowedVoices.some(allowed => v.name.includes(allowed)))
+          .filter(v => {
+            // Must be English
+            if (!v.lang.startsWith('en')) return false
+            
+            // Must match one of the allowed voice names (check if voice name contains allowed name)
+            return allowedVoiceNames.some(allowed => v.name.includes(allowed))
+          })
           .map(v => ({
             name: v.name,
             lang: v.lang,
             local: v.localService
           }))
-        setAvailableVoices(filteredVoices)
+        
+        // Remove duplicates by name
+        const uniqueVoices = filteredVoices.filter((voice, index, self) => 
+          index === self.findIndex((v) => v.name === voice.name)
+        )
+        
+        setAvailableVoices(uniqueVoices)
         
         // Set default voice (prefer Karen or Samantha)
-        const defaultVoice = filteredVoices.find(v => 
+        const defaultVoice = uniqueVoices.find(v => 
           v.name.includes('Karen') || v.name.includes('Samantha')
-        ) || filteredVoices[0]
+        ) || uniqueVoices[0]
         
         if (defaultVoice) {
           setSelectedVoice(defaultVoice.name)
