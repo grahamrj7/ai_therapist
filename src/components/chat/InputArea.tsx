@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Send, Sparkles } from "lucide-react"
+import { Send, Sparkles, Wind, Activity } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ interface InputAreaProps {
   onToggleRecording?: () => void
   interimText?: string
   therapistName?: string
+  onOpenActivity?: (activity: string) => void
 }
 
 const QUICK_ACTIONS = [
@@ -22,16 +23,22 @@ const QUICK_ACTIONS = [
   "Just checking in",
 ]
 
+const ACTIVITIES = [
+  { id: "breathing", label: "Breathe", icon: Wind, description: "Box breathing exercise" },
+]
+
 export function InputArea({ 
   onSendMessage, 
   isTyping, 
   isRecording, 
   onToggleRecording,
   interimText,
-  therapistName = "Abby"
+  therapistName = "Abby",
+  onOpenActivity
 }: InputAreaProps) {
   const [input, setInput] = useState("")
   const [showQuickActions, setShowQuickActions] = useState(true)
+  const [showActivitiesMenu, setShowActivitiesMenu] = useState(false)
 
   const handleSend = () => {
     if (!input.trim() || isTyping) return
@@ -52,14 +59,90 @@ export function InputArea({
     setShowQuickActions(false)
   }
 
+  const handleActivityClick = (activityId: string) => {
+    onOpenActivity?.(activityId)
+    setShowActivitiesMenu(false)
+  }
+
   return (
     <div className="bg-white border-t border-linen px-6 py-5 space-y-4">
-      {/* Voice Recorder - Centered above input */}
-      <div className="flex justify-center pb-2">
-        <VoiceRecorder 
-          isRecording={isRecording || false} 
-          onToggle={onToggleRecording || (() => {})} 
-        />
+      {/* Toolbar: Voice Recorder (center) + Activities (right) */}
+      <div className="grid grid-cols-3 items-center">
+        {/* Left - Empty spacer */}
+        <div />
+
+        {/* Center - Voice Recorder */}
+        <div className="flex justify-center">
+          <VoiceRecorder 
+            isRecording={isRecording || false} 
+            onToggle={onToggleRecording || (() => {})} 
+          />
+        </div>
+
+        {/* Right - Activities Button */}
+        <div className="flex justify-end relative">
+          {onOpenActivity && (
+            <div className="relative">
+              <button
+                onClick={() => setShowActivitiesMenu(!showActivitiesMenu)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200",
+                  showActivitiesMenu 
+                    ? "bg-terracotta text-white border-terracotta" 
+                    : "bg-cream text-text-secondary border-linen hover:bg-sand hover:border-terracotta-light"
+                )}
+              >
+                <Activity className="h-4 w-4" />
+                <span className="text-sm font-medium">Activities</span>
+              </button>
+
+              {/* Activities Dropdown Menu */}
+              <AnimatePresence>
+                {showActivitiesMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowActivitiesMenu(false)}
+                    />
+                    
+                    {/* Menu */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 bottom-full mb-2 w-64 bg-white rounded-2xl shadow-xl border border-linen p-2 z-50"
+                    >
+                      <div className="px-3 py-2 border-b border-linen mb-2">
+                        <h4 className="font-semibold text-sm text-text-primary">Therapeutic Activities</h4>
+                        <p className="text-xs text-text-muted">Take a moment for yourself</p>
+                      </div>
+                      {ACTIVITIES.map((activity) => (
+                        <button
+                          key={activity.id}
+                          onClick={() => handleActivityClick(activity.id)}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-cream transition-colors text-left group"
+                        >
+                          <div className="h-9 w-9 rounded-full bg-terracotta/10 flex items-center justify-center group-hover:bg-terracotta/20 transition-colors">
+                            <activity.icon className="h-4 w-4 text-terracotta" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm text-text-primary">{activity.label}</p>
+                            <p className="text-xs text-text-muted">{activity.description}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Actions */}

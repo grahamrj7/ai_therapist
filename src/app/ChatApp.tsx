@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { SettingsDialog } from "@/components/layout/SettingsDialog"
 import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
+import { BreathingExercise } from "@/components/activities/BreathingExercise"
 import { TTSPrompt } from "@/components/TTSPrompt"
 import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
@@ -31,6 +32,7 @@ export function ChatApp() {
   } = useChat({ therapistName: settings.therapistName })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
+  const [activeActivity, setActiveActivity] = useState<string | null>(null)
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
   const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled, voiceName: settings.voiceName })
@@ -142,15 +144,25 @@ export function ChatApp() {
         onSettingsClick={() => setIsSettingsOpen(true)}
         therapistName={settings.therapistName}
       >
-        <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} therapistName={settings.therapistName} />
-        <InputArea
-          onSendMessage={handleSendMessage}
-          isTyping={isTyping}
-          isRecording={isRecording}
-          onToggleRecording={handleToggleRecording}
-          interimText={interimTranscript}
-          therapistName={settings.therapistName}
-        />
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          {activeActivity === "breathing" ? (
+            <BreathingExercise onClose={() => setActiveActivity(null)} />
+          ) : (
+            <>
+              <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} therapistName={settings.therapistName} />
+              <InputArea
+                onSendMessage={handleSendMessage}
+                isTyping={isTyping}
+                isRecording={isRecording}
+                onToggleRecording={handleToggleRecording}
+                interimText={interimTranscript}
+                therapistName={settings.therapistName}
+                onOpenActivity={setActiveActivity}
+              />
+            </>
+          )}
+        </div>
       </AppLayout>
 
       <SettingsDialog
