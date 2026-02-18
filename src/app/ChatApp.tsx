@@ -13,7 +13,7 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech"
 
 export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
-  const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt, completeOnboarding, isLoaded } = useSettings()
+  const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt, completeOnboarding, resetSettings, isLoaded } = useSettings()
 
   const {
     sessions,
@@ -115,6 +115,8 @@ export function ChatApp() {
     setSessions([])
     setMessages([])
     setCurrentSessionId('')
+    resetSettings()
+    setIsSettingsOpen(false)
   }
 
   const handleOnboardingComplete = (name: string, tts: boolean) => {
