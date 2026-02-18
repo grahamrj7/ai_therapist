@@ -24,4 +24,5 @@ export interface UserSettings {
   ttsEnabled: boolean
   hasSeenTTSPrompt: boolean
   hasCompletedOnboarding: boolean
+  voiceName?: string
 }

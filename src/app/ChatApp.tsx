@@ -33,7 +33,7 @@ export function ChatApp() {
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
-  const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled })
+  const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled, voiceName: settings.voiceName })
 
   // Show TTS prompt on first load after a delay
   useEffect(() => {
@@ -119,8 +119,8 @@ export function ChatApp() {
     setIsSettingsOpen(false)
   }
 
-  const handleOnboardingComplete = (name: string, tts: boolean) => {
-    completeOnboarding(name, tts)
+  const handleOnboardingComplete = (name: string, tts: boolean, voiceName?: string) => {
+    completeOnboarding(name, tts, voiceName)
   }
 
   // Show onboarding if settings haven't loaded yet or onboarding isn't complete

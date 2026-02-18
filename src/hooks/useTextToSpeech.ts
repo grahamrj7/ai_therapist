@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 
 interface UseTextToSpeechOptions {
   enabled?: boolean
+  voiceName?: string
 }
 
 interface UseTextToSpeechReturn {
@@ -12,7 +13,7 @@ interface UseTextToSpeechReturn {
 }
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextToSpeechReturn {
-  const { enabled = false } = options
+  const { enabled = false, voiceName } = options
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [supported, setSupported] = useState(true)
   const enabledRef = useRef(enabled)
@@ -38,11 +39,19 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     const selectVoice = () => {
       const voices = synth.getVoices()
       
-      // Find a good English voice (prefer Karen, Samantha, or any English)
-      const preferredVoice = voices.find(v =>
-        v.lang.startsWith('en') && 
-        (v.name.includes('Karen') || v.name.includes('Samantha') || v.name.includes('Google'))
-      ) || voices.find(v => v.lang.startsWith('en')) || voices[0]
+      // If a specific voice name is provided, try to find it
+      let preferredVoice = null
+      if (voiceName) {
+        preferredVoice = voices.find(v => v.name === voiceName)
+      }
+      
+      // Fallback to default selection if specific voice not found
+      if (!preferredVoice) {
+        preferredVoice = voices.find(v =>
+          v.lang.startsWith('en') && 
+          (v.name.includes('Karen') || v.name.includes('Samantha') || v.name.includes('Google'))
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0]
+      }
 
       if (preferredVoice) {
         voiceRef.current = preferredVoice
@@ -55,7 +64,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     if (synth.onvoiceschanged !== undefined) {
       synth.onvoiceschanged = selectVoice
     }
-  }, [])
+  }, [voiceName])
 
   // Process queue
   const processQueue = useCallback(() => {

@@ -51,11 +51,12 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, hasCompletedOnboarding: completed }))
   }, [])
 
-  const completeOnboarding = useCallback((name: string, ttsEnabled: boolean) => {
+  const completeOnboarding = useCallback((name: string, ttsEnabled: boolean, voiceName?: string) => {
     setSettings((prev) => ({
       ...prev,
       therapistName: name || "Abby",
       ttsEnabled,
+      voiceName,
       hasCompletedOnboarding: true,
     }))
   }, [])
