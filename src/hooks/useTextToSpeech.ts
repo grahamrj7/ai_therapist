@@ -87,11 +87,27 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     const synth = window.speechSynthesis
     if (!synth) return
 
+    // Re-select voice right before speaking to ensure we have the right one
+    const voices = synth.getVoices()
+    if (voiceName) {
+      const selectedVoice = voices.find(v => v.name === voiceName)
+      if (selectedVoice) {
+        voiceRef.current = selectedVoice
+        console.log("[TTS] Using selected voice:", selectedVoice.name)
+      } else {
+        console.log("[TTS] Warning: Selected voice not found:", voiceName)
+        console.log("[TTS] Available voices:", voices.map(v => v.name))
+      }
+    }
+
     const utterance = new SpeechSynthesisUtterance(text)
     currentUtteranceRef.current = utterance
     
     if (voiceRef.current) {
       utterance.voice = voiceRef.current
+      console.log("[TTS] Speaking with voice:", voiceRef.current.name)
+    } else {
+      console.log("[TTS] Warning: No voice selected, using default")
     }
 
     utterance.rate = 1.0
@@ -118,7 +134,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     }
 
     synth.speak(utterance)
-  }, [enabled, isSpeaking])
+  }, [enabled, isSpeaking, voiceName])
 
   const speak = useCallback((text: string) => {
     if (!enabledRef.current) {
