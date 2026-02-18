@@ -21,24 +21,37 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([])
   const [step, setStep] = useState(1)
 
+  // Allowed voices
+  const allowedVoices = [
+    'Moira',
+    'Daniel', 
+    'Eddy',
+    'Flo',
+    'Karen',
+    'Ralph',
+    'Reed',
+    'Samantha',
+    'Google US English'
+  ]
+
   useEffect(() => {
     const loadVoices = () => {
       const synth = window.speechSynthesis
       if (synth) {
         const voices = synth.getVoices()
-        const englishVoices = voices
-          .filter(v => v.lang.startsWith('en'))
+        const filteredVoices = voices
+          .filter(v => allowedVoices.some(allowed => v.name.includes(allowed)))
           .map(v => ({
             name: v.name,
             lang: v.lang,
             local: v.localService
           }))
-        setAvailableVoices(englishVoices)
+        setAvailableVoices(filteredVoices)
         
-        // Set default voice (prefer local voices like Karen)
-        const defaultVoice = englishVoices.find(v => 
+        // Set default voice (prefer Karen or Samantha)
+        const defaultVoice = filteredVoices.find(v => 
           v.name.includes('Karen') || v.name.includes('Samantha')
-        ) || englishVoices[0]
+        ) || filteredVoices[0]
         
         if (defaultVoice) {
           setSelectedVoice(defaultVoice.name)

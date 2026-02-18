@@ -39,18 +39,29 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     const selectVoice = () => {
       const voices = synth.getVoices()
       
+      // Allowed voices in order of preference
+      const allowedVoices = [
+        'Karen', 'Samantha', 'Moira', 'Daniel', 
+        'Eddy', 'Flo', 'Ralph', 'Reed', 'Google US English'
+      ]
+      
       // If a specific voice name is provided, try to find it
       let preferredVoice = null
       if (voiceName) {
         preferredVoice = voices.find(v => v.name === voiceName)
       }
       
-      // Fallback to default selection if specific voice not found
+      // Fallback to allowed voices if specific voice not found
       if (!preferredVoice) {
-        preferredVoice = voices.find(v =>
-          v.lang.startsWith('en') && 
-          (v.name.includes('Karen') || v.name.includes('Samantha') || v.name.includes('Google'))
-        ) || voices.find(v => v.lang.startsWith('en')) || voices[0]
+        for (const allowedName of allowedVoices) {
+          preferredVoice = voices.find(v => v.name.includes(allowedName))
+          if (preferredVoice) break
+        }
+      }
+      
+      // Last resort: any English voice
+      if (!preferredVoice) {
+        preferredVoice = voices.find(v => v.lang.startsWith('en')) || voices[0]
       }
 
       if (preferredVoice) {
