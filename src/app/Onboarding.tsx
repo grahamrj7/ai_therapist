@@ -35,48 +35,67 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   ]
 
   useEffect(() => {
+    const synth = window.speechSynthesis
+    if (!synth) return
+
     const loadVoices = () => {
-      const synth = window.speechSynthesis
-      if (synth) {
-        const voices = synth.getVoices()
-        
-        // Filter to only English voices that contain one of the allowed names
-        const filteredVoices = voices
-          .filter(v => {
-            // Must be English
-            if (!v.lang.startsWith('en')) return false
-            
-            // Must match one of the allowed voice names (check if voice name contains allowed name)
-            return allowedVoiceNames.some(allowed => v.name.includes(allowed))
-          })
-          .map(v => ({
-            name: v.name,
-            lang: v.lang,
-            local: v.localService
-          }))
-        
-        // Remove duplicates by name
-        const uniqueVoices = filteredVoices.filter((voice, index, self) => 
-          index === self.findIndex((v) => v.name === voice.name)
-        )
-        
-        setAvailableVoices(uniqueVoices)
-        
-        // Set default voice (prefer Karen or Samantha)
-        const defaultVoice = uniqueVoices.find(v => 
-          v.name.includes('Karen') || v.name.includes('Samantha')
-        ) || uniqueVoices[0]
-        
-        if (defaultVoice) {
-          setSelectedVoice(defaultVoice.name)
-        }
+      const voices = synth.getVoices()
+      console.log('[Onboarding] Total voices available:', voices.length)
+      console.log('[Onboarding] Voice names:', voices.map(v => v.name))
+      
+      // Filter to only English voices that contain one of the allowed names
+      const filteredVoices = voices
+        .filter(v => {
+          // Must be English
+          if (!v.lang.startsWith('en')) return false
+          
+          // Must match one of the allowed voice names
+          return allowedVoiceNames.some(allowed => v.name.includes(allowed))
+        })
+        .map(v => ({
+          name: v.name,
+          lang: v.lang,
+          local: v.localService
+        }))
+      
+      // Remove duplicates by name
+      const uniqueVoices = filteredVoices.filter((voice, index, self) => 
+        index === self.findIndex((v) => v.name === voice.name)
+      )
+      
+      console.log('[Onboarding] Filtered voices:', uniqueVoices.length)
+      console.log('[Onboarding] Filtered voice names:', uniqueVoices.map(v => v.name))
+      
+      setAvailableVoices(uniqueVoices)
+      
+      // Set default voice (prefer Karen or Samantha)
+      const defaultVoice = uniqueVoices.find(v => 
+        v.name.includes('Karen') || v.name.includes('Samantha')
+      ) || uniqueVoices[0]
+      
+      if (defaultVoice && !selectedVoice) {
+        setSelectedVoice(defaultVoice.name)
       }
     }
 
-    loadVoices()
+    // Load voices immediately if available
+    if (synth.getVoices().length > 0) {
+      loadVoices()
+    }
     
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = loadVoices
+    // Also set up the event listener for when voices load
+    synth.onvoiceschanged = loadVoices
+    
+    // Fallback: try loading after a short delay
+    const timeoutId = setTimeout(() => {
+      if (availableVoices.length === 0) {
+        console.log('[Onboarding] Retrying voice load after delay...')
+        loadVoices()
+      }
+    }, 500)
+    
+    return () => {
+      clearTimeout(timeoutId)
     }
   }, [])
 

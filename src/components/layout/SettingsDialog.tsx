@@ -52,39 +52,55 @@ export function SettingsDialog({
 
   // Load available voices
   useEffect(() => {
+    const synth = window.speechSynthesis
+    if (!synth) return
+
     const loadVoices = () => {
-      const synth = window.speechSynthesis
-      if (synth) {
-        const voices = synth.getVoices()
-        
-        // Filter to only English voices that contain one of the allowed names
-        const filteredVoices = voices
-          .filter(v => {
-            // Must be English
-            if (!v.lang.startsWith('en')) return false
-            
-            // Must match one of the allowed voice names
-            return allowedVoiceNames.some(allowed => v.name.includes(allowed))
-          })
-          .map(v => ({
-            name: v.name,
-            lang: v.lang,
-            local: v.localService
-          }))
-        
-        // Remove duplicates by name
-        const uniqueVoices = filteredVoices.filter((voice, index, self) => 
-          index === self.findIndex((v) => v.name === voice.name)
-        )
-        
-        setAvailableVoices(uniqueVoices)
-      }
+      const voices = synth.getVoices()
+      console.log('[Settings] Total voices available:', voices.length)
+      
+      // Filter to only English voices that contain one of the allowed names
+      const filteredVoices = voices
+        .filter(v => {
+          // Must be English
+          if (!v.lang.startsWith('en')) return false
+          
+          // Must match one of the allowed voice names
+          return allowedVoiceNames.some(allowed => v.name.includes(allowed))
+        })
+        .map(v => ({
+          name: v.name,
+          lang: v.lang,
+          local: v.localService
+        }))
+      
+      // Remove duplicates by name
+      const uniqueVoices = filteredVoices.filter((voice, index, self) => 
+        index === self.findIndex((v) => v.name === voice.name)
+      )
+      
+      console.log('[Settings] Filtered voices:', uniqueVoices.length)
+      setAvailableVoices(uniqueVoices)
     }
 
-    loadVoices()
+    // Load voices immediately if available
+    if (synth.getVoices().length > 0) {
+      loadVoices()
+    }
     
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = loadVoices
+    // Also set up the event listener for when voices load
+    synth.onvoiceschanged = loadVoices
+    
+    // Fallback: try loading after a short delay
+    const timeoutId = setTimeout(() => {
+      if (availableVoices.length === 0) {
+        console.log('[Settings] Retrying voice load after delay...')
+        loadVoices()
+      }
+    }, 500)
+    
+    return () => {
+      clearTimeout(timeoutId)
     }
   }, [])
 
