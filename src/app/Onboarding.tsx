@@ -105,6 +105,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
     synth.cancel()
     
+    // Auto-select this voice when previewing
+    setSelectedVoice(voiceName)
+    
     const utterance = new SpeechSynthesisUtterance(`Hi, I'm ${name}. This is how I'll sound.`)
     const voice = synth.getVoices().find(v => v.name === voiceName)
     if (voice) {

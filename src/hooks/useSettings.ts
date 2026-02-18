@@ -61,6 +61,10 @@ export function useSettings() {
     }))
   }, [])
 
+  const updateVoiceName = useCallback((voiceName: string) => {
+    setSettings((prev) => ({ ...prev, voiceName }))
+  }, [])
+
   const resetSettings = useCallback(() => {
     localStorage.removeItem(SETTINGS_KEY)
     setSettings(defaultSettings)
@@ -74,6 +78,7 @@ export function useSettings() {
     setHasSeenTTSPrompt,
     setHasCompletedOnboarding,
     completeOnboarding,
+    updateVoiceName,
     resetSettings,
   }
 }

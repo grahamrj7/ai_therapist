@@ -17,11 +17,29 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [supported, setSupported] = useState(true)
   const enabledRef = useRef(enabled)
+  const voiceNameRef = useRef(voiceName)
   
-  // Keep enabled ref in sync
+  // Keep refs in sync
   useEffect(() => {
     enabledRef.current = enabled
   }, [enabled])
+  
+  useEffect(() => {
+    voiceNameRef.current = voiceName
+    console.log("[TTS] voiceName updated:", voiceName)
+    
+    // Re-select voice when voiceName changes
+    const synth = window.speechSynthesis
+    if (synth && voiceName) {
+      const voices = synth.getVoices()
+      const selectedVoice = voices.find(v => v.name === voiceName)
+      if (selectedVoice) {
+        voiceRef.current = selectedVoice
+        console.log("[TTS] Voice re-selected:", selectedVoice.name)
+      }
+    }
+  }, [voiceName])
+  
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null)
   const queueRef = useRef<string[]>([])
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
@@ -38,6 +56,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
     const selectVoice = () => {
       const voices = synth.getVoices()
+      const currentVoiceName = voiceNameRef.current
       
       // Allowed voices in order of preference
       const allowedVoices = [
@@ -47,8 +66,11 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
       
       // If a specific voice name is provided, try to find it
       let preferredVoice = null
-      if (voiceName) {
-        preferredVoice = voices.find(v => v.name === voiceName)
+      if (currentVoiceName) {
+        preferredVoice = voices.find(v => v.name === currentVoiceName)
+        if (preferredVoice) {
+          console.log("[TTS] Found requested voice:", preferredVoice.name)
+        }
       }
       
       // Fallback to allowed voices if specific voice not found
@@ -66,7 +88,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
       if (preferredVoice) {
         voiceRef.current = preferredVoice
-        console.log("Selected voice:", preferredVoice.name)
+        console.log("[TTS] Selected voice:", preferredVoice.name)
       }
     }
 
@@ -75,7 +97,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     if (synth.onvoiceschanged !== undefined) {
       synth.onvoiceschanged = selectVoice
     }
-  }, [voiceName])
+  }, [])
 
   // Process queue
   const processQueue = useCallback(() => {
@@ -89,13 +111,15 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
     // Re-select voice right before speaking to ensure we have the right one
     const voices = synth.getVoices()
-    if (voiceName) {
-      const selectedVoice = voices.find(v => v.name === voiceName)
+    const currentVoiceName = voiceNameRef.current
+    console.log("[TTS] processQueue - current voiceName:", currentVoiceName)
+    if (currentVoiceName) {
+      const selectedVoice = voices.find(v => v.name === currentVoiceName)
       if (selectedVoice) {
         voiceRef.current = selectedVoice
         console.log("[TTS] Using selected voice:", selectedVoice.name)
       } else {
-        console.log("[TTS] Warning: Selected voice not found:", voiceName)
+        console.log("[TTS] Warning: Selected voice not found:", currentVoiceName)
         console.log("[TTS] Available voices:", voices.map(v => v.name))
       }
     }
@@ -134,7 +158,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     }
 
     synth.speak(utterance)
-  }, [enabled, isSpeaking, voiceName])
+  }, [enabled, isSpeaking])
 
   const speak = useCallback((text: string) => {
     if (!enabledRef.current) {
