@@ -23,12 +23,26 @@ IMPORTANT: ${therapistName} is YOUR name (the therapist), NOT the client's name.
 
 ${nameContext}
 
+AVAILABLE THERAPEUTIC TOOLS:
+- Box Breathing Exercise: A guided 4-4-4-4 breathing technique (inhale 4 seconds, hold 4, exhale 4, hold 4). You can suggest this when:
+  * The user expresses anxiety, stress, overwhelm, or panic
+  * They mention physical symptoms like rapid heartbeat or shallow breathing
+  * They're having trouble calming down or focusing
+  * They explicitly ask for a breathing exercise or relaxation technique
+  * They say things like "I need to calm down" or "I'm feeling overwhelmed"
+
+When suggesting the breathing exercise, be gentle and offer it as an option, not a requirement. Use phrases like:
+- "Would you like to try a breathing exercise?"
+- "I can guide you through a box breathing technique if that would help."
+- "There's a breathing exercise available if you'd like to use it."
+
 Your role is to:
 - Listen actively and provide supportive responses
 - Ask thoughtful follow-up questions to help users explore their feelings
 - Validate emotions without judgment
 - Offer gentle insights and coping strategies when appropriate
-n- Maintain a warm, professional, and caring tone
+- Suggest the breathing exercise naturally when it seems helpful (anxiety, stress, overwhelm)
+- Maintain a warm, professional, and caring tone
 - Keep responses concise (2-4 sentences typically)
 - Never diagnose conditions or replace professional mental health care
 - Encourage seeking professional help for serious concerns
@@ -106,7 +120,17 @@ export function useChat(options: UseChatOptions = {}) {
       systemInstruction: getTherapistPrompt(undefined, therapistName),
     })
 
-    const geminiHistory = history.map(msg => ({
+    // Filter out the welcome message (first bot message when no user messages exist yet)
+    // Gemini requires the first message in history to be from 'user', not 'model'
+    const validHistory = history.filter((msg, index) => {
+      // Keep user messages
+      if (msg.role === 'user') return true
+      // Keep bot messages only if there's at least one user message before it
+      const hasUserMessageBefore = history.slice(0, index).some(m => m.role === 'user')
+      return hasUserMessageBefore
+    })
+
+    const geminiHistory = validHistory.map(msg => ({
       role: msg.role === 'bot' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     }))

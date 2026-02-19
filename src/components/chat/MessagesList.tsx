@@ -9,9 +9,10 @@ interface MessagesListProps {
   isTyping?: boolean
   isFreshChat?: boolean
   therapistName?: string
+  onTriggerBreathing?: () => void
 }
 
-export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby" }: MessagesListProps) {
+export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby", onTriggerBreathing }: MessagesListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function MessagesList({ messages, isTyping, isFreshChat, therapistName = 
     >
       <AnimatePresence mode="popLayout">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble key={message.id} message={message} onTriggerBreathing={onTriggerBreathing} />
         ))}
         
         {isTyping && <TypingIndicator />}

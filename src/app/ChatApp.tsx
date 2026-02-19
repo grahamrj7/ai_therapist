@@ -95,8 +95,35 @@ export function ChatApp() {
     }
   }, [interimTranscript, setInterimText])
 
+  // Keywords that indicate user wants to start breathing exercise
+  const BREATHING_REQUEST_KEYWORDS = [
+    "breathing exercise",
+    "box breathing",
+    "start breathing",
+    "do breathing",
+    "breathing technique",
+    "guided breathing",
+    "deep breathing",
+    "i want to breathe",
+    "let's breathe",
+    "help me breathe",
+    "breathe with me",
+    "calm me down",
+    "i need to calm down",
+  ]
+
   const handleSendMessage = (content: string) => {
-    sendMessage(content)
+    const lowerContent = content.toLowerCase()
+    const isBreathingRequest = BREATHING_REQUEST_KEYWORDS.some(keyword => 
+      lowerContent.includes(keyword)
+    )
+    
+    if (isBreathingRequest) {
+      // User explicitly asked for breathing exercise
+      setActiveActivity("breathing")
+    } else {
+      sendMessage(content)
+    }
   }
 
   const handleToggleRecording = () => {
@@ -125,6 +152,10 @@ export function ChatApp() {
     completeOnboarding(name, tts, voiceName)
   }
 
+  const handleTriggerBreathing = () => {
+    setActiveActivity("breathing")
+  }
+
   // Show onboarding if settings haven't loaded yet or onboarding isn't complete
   if (!isLoaded || !settings.hasCompletedOnboarding) {
     return <Onboarding onComplete={handleOnboardingComplete} />
@@ -150,7 +181,13 @@ export function ChatApp() {
             <BreathingExercise onClose={() => setActiveActivity(null)} />
           ) : (
             <>
-              <MessagesList messages={messages} isTyping={isTyping} isFreshChat={isFreshChat} therapistName={settings.therapistName} />
+              <MessagesList 
+                messages={messages} 
+                isTyping={isTyping} 
+                isFreshChat={isFreshChat} 
+                therapistName={settings.therapistName}
+                onTriggerBreathing={handleTriggerBreathing}
+              />
               <InputArea
                 onSendMessage={handleSendMessage}
                 isTyping={isTyping}
