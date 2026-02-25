@@ -1,31 +1,65 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Wind, Play, Pause, ArrowLeft } from "lucide-react"
+import { Wind, Play, Pause, ArrowLeft, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface BreathingExerciseProps {
   onClose: () => void
+  voiceName?: string
 }
 
 type BreathingPhase = "inhale" | "hold" | "exhale" | "hold2"
 
-export function BreathingExercise({ onClose }: BreathingExerciseProps) {
+const PHASE_DURATION = 4 // seconds
+
+export function BreathingExercise({ onClose, voiceName }: BreathingExerciseProps) {
   const [isActive, setIsActive] = useState(false)
   const [phase, setPhase] = useState<BreathingPhase>("inhale")
   const [cycleCount, setCycleCount] = useState(0)
+  const [secondsRemaining, setSecondsRemaining] = useState(PHASE_DURATION)
+  const [isMuted, setIsMuted] = useState(false)
+  const countdownRef = useRef<NodeJS.Timeout | null>(null)
+  const phaseTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const prevPhaseRef = useRef<BreathingPhase | null>(null)
 
+  // Clear all timers
+  const clearTimers = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current)
+      countdownRef.current = null
+    }
+    if (phaseTimerRef.current) {
+      clearTimeout(phaseTimerRef.current)
+      phaseTimerRef.current = null
+    }
+  }
+
+  // Start countdown timer
+  const startCountdown = () => {
+    setSecondsRemaining(PHASE_DURATION)
+    countdownRef.current = setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev <= 1) {
+          return PHASE_DURATION
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  // Phase transition effect
   useEffect(() => {
-    if (!isActive) return
-
-    const phaseDurations: Record<BreathingPhase, number> = {
-      inhale: 4000,
-      hold: 4000,
-      exhale: 4000,
-      hold2: 4000,
+    if (!isActive) {
+      clearTimers()
+      return
     }
 
-    const timer = setTimeout(() => {
+    // Start countdown
+    startCountdown()
+
+    // Set up phase transition
+    phaseTimerRef.current = setTimeout(() => {
       const phaseOrder: BreathingPhase[] = ["inhale", "hold", "exhale", "hold2"]
       const currentIndex = phaseOrder.indexOf(phase)
       const nextPhase = phaseOrder[(currentIndex + 1) % phaseOrder.length]
@@ -35,22 +69,48 @@ export function BreathingExercise({ onClose }: BreathingExerciseProps) {
       }
       
       setPhase(nextPhase)
-    }, phaseDurations[phase])
+    }, PHASE_DURATION * 1000)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimers()
+    }
   }, [isActive, phase])
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      setIsActive(false)
-      setPhase("inhale")
+      clearTimers()
+      // Cancel any ongoing speech when component unmounts
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
     }
   }, [])
 
   const handleToggle = () => {
-    setIsActive(!isActive)
-    if (!isActive) {
+    if (isActive) {
+      // Pausing
+      clearTimers()
+      setIsActive(false)
+      prevPhaseRef.current = null
+      // Cancel any ongoing speech when pausing
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    } else {
+      // Starting
+      setIsActive(true)
       setPhase("inhale")
+      setSecondsRemaining(PHASE_DURATION)
+      prevPhaseRef.current = null
+    }
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+    if (!isMuted && window.speechSynthesis) {
+      // If unmuting, cancel any ongoing speech
+      window.speechSynthesis.cancel()
     }
   }
 
@@ -92,6 +152,69 @@ export function BreathingExercise({ onClose }: BreathingExerciseProps) {
     }
   }
 
+  // Text-to-speech for breathing guidance
+  const speakPhase = (phaseToSpeak: BreathingPhase) => {
+    if (isMuted || !window.speechSynthesis) return
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel()
+
+    const text = getPhaseTextForSpeech(phaseToSpeak)
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.85 // Slightly slower for breathing guidance
+    utterance.pitch = 1
+    utterance.volume = 0.8
+
+    // Use the user's selected voice if available
+    const voices = window.speechSynthesis.getVoices()
+    if (voiceName) {
+      const selectedVoice = voices.find(v => v.name === voiceName)
+      if (selectedVoice) {
+        utterance.voice = selectedVoice
+      }
+    }
+
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const getPhaseTextForSpeech = (phase: BreathingPhase) => {
+    const greetings = ["Let's begin", "Here we go", "Starting now"]
+    const inhalePhrases = ["Breathe in slowly", "Take a deep breath in", "Inhale gently"]
+    const holdPhrases = ["Hold it there", "Pause and hold", "Stay with this moment"]
+    const exhalePhrases = ["Breathe out slowly", "Release and exhale", "Let it all out"]
+    
+    switch (phase) {
+      case "inhale":
+        // Use greeting on first cycle, otherwise random inhale phrase
+        if (cycleCount === 0 && prevPhaseRef.current === null) {
+          return greetings[Math.floor(Math.random() * greetings.length)] + ". " + inhalePhrases[Math.floor(Math.random() * inhalePhrases.length)]
+        }
+        return inhalePhrases[Math.floor(Math.random() * inhalePhrases.length)]
+      case "hold":
+        return holdPhrases[Math.floor(Math.random() * holdPhrases.length)]
+      case "exhale":
+        return exhalePhrases[Math.floor(Math.random() * exhalePhrases.length)]
+      case "hold2":
+        return holdPhrases[Math.floor(Math.random() * holdPhrases.length)]
+    }
+  }
+
+  // Speak when phase changes
+  useEffect(() => {
+    if (isActive && phase !== prevPhaseRef.current) {
+      speakPhase(phase)
+      prevPhaseRef.current = phase
+    }
+  }, [phase, isActive])
+
+  // Speak when starting the exercise
+  useEffect(() => {
+    if (isActive && prevPhaseRef.current === null) {
+      speakPhase(phase)
+      prevPhaseRef.current = phase
+    }
+  }, [isActive])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -100,19 +223,36 @@ export function BreathingExercise({ onClose }: BreathingExerciseProps) {
       className="absolute inset-0 bg-white z-10 flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-linen">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-linen">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full hover:bg-cream"
+          >
+            <ArrowLeft className="h-5 w-5 text-text-secondary" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Wind className="h-5 w-5 text-terracotta" />
+            <h2 className="font-semibold text-lg text-text-primary">Box Breathing</h2>
+          </div>
+        </div>
+        
+        {/* Mute Button */}
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={toggleMute}
           className="rounded-full hover:bg-cream"
+          title={isMuted ? "Unmute guidance" : "Mute guidance"}
         >
-          <ArrowLeft className="h-5 w-5 text-text-secondary" />
+          {isMuted ? (
+            <VolumeX className="h-5 w-5 text-text-secondary" />
+          ) : (
+            <Volume2 className="h-5 w-5 text-text-secondary" />
+          )}
         </Button>
-        <div className="flex items-center gap-2">
-          <Wind className="h-5 w-5 text-terracotta" />
-          <h2 className="font-semibold text-lg text-text-primary">Box Breathing</h2>
-        </div>
       </div>
 
       {/* Main content */}
@@ -135,7 +275,7 @@ export function BreathingExercise({ onClose }: BreathingExerciseProps) {
                     }
                   : { scale: 1, opacity: 0.2 }
               }
-              transition={{ duration: 4, ease: "easeInOut" }}
+              transition={{ duration: PHASE_DURATION, ease: "easeInOut" }}
             />
           ))}
 
@@ -152,14 +292,18 @@ export function BreathingExercise({ onClose }: BreathingExerciseProps) {
                   }
                 : { scale: 1 }
             }
-            transition={{ duration: 4, ease: "easeInOut" }}
+            transition={{ duration: PHASE_DURATION, ease: "easeInOut" }}
           >
-            <span className="text-white font-semibold text-2xl mb-1">
+            <span className="text-white font-semibold text-2xl mb-2">
               {isActive ? getPhaseText() : "Ready?"}
             </span>
-            {isActive && (
+            {isActive ? (
+              <span className="text-white text-5xl font-bold tabular-nums">
+                {secondsRemaining}
+              </span>
+            ) : (
               <span className="text-white/80 text-sm font-medium">
-                4 seconds
+                4 seconds each
               </span>
             )}
           </motion.div>
