@@ -4,7 +4,7 @@ import { SettingsDialog } from "@/components/layout/SettingsDialog"
 import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
 import { BreathingExercise } from "@/components/activities/BreathingExercise"
-import { EmotionScaleSliders } from "@/components/activities/EmotionScaleSliders"
+import { EmotionScaleSliders, type EmotionScale } from "@/components/activities/EmotionScaleSliders"
 import { TTSPrompt } from "@/components/TTSPrompt"
 import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSettings } from "@/hooks/useSettings"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useTextToSpeech } from "@/hooks/useTextToSpeech"
-import { saveUserProfile } from "@/lib/db"
+import { saveUserProfile, saveEmotionCheckin } from "@/lib/db"
 
 export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
@@ -166,6 +166,16 @@ export function ChatApp() {
     }
   }
 
+  const handleSaveEmotions = async (emotions: EmotionScale[]) => {
+    if (user?.uid) {
+      try {
+        await saveEmotionCheckin(user.uid, emotions, currentSessionId || undefined)
+      } catch (error) {
+        console.error("Error saving emotion checkin:", error)
+      }
+    }
+  }
+
   const handleClearData = () => {
     localStorage.removeItem('therapy_sessions')
     setSessions([])
@@ -207,7 +217,10 @@ export function ChatApp() {
           {activeActivity === "breathing" ? (
             <BreathingExercise onClose={() => setActiveActivity(null)} voiceName={settings.voiceName} />
           ) : activeActivity === "emotions" ? (
-            <EmotionScaleSliders onClose={() => setActiveActivity(null)} />
+            <EmotionScaleSliders 
+              onClose={() => setActiveActivity(null)} 
+              onSave={handleSaveEmotions}
+            />
           ) : (
             <>
               <MessagesList 

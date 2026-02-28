@@ -1,5 +1,6 @@
 import { supabase } from "./supabase"
 import type { Message, Session } from "@/types"
+import type { EmotionScale } from "@/components/activities/EmotionScaleSliders"
 
 export async function saveSession(userId: string, session: Session) {
   const { error } = await supabase
@@ -88,4 +89,62 @@ export async function saveUserProfile(user: { uid: string; displayName: string |
   if (error) {
     console.error("Error saving user profile:", error)
   }
+}
+
+export interface EmotionCheckin {
+  id: string
+  user_id: string
+  session_id?: string
+  timestamp: number
+  anxiety?: number
+  mood?: number
+  stress?: number
+  energy?: number
+}
+
+export async function saveEmotionCheckin(
+  userId: string, 
+  emotions: EmotionScale[], 
+  sessionId?: string
+) {
+  const emotionData = emotions.reduce((acc, emotion) => {
+    acc[emotion.id] = emotion.value
+    return acc
+  }, {} as Record<string, number>)
+
+  const { error } = await supabase
+    .from("emotion_checkins")
+    .upsert({
+      id: Math.random().toString(36).substring(2, 9),
+      user_id: userId,
+      session_id: sessionId,
+      timestamp: Date.now(),
+      ...emotionData,
+    })
+
+  if (error) {
+    console.error("Error saving emotion checkin:", error)
+    throw error
+  }
+}
+
+export async function loadEmotionCheckins(userId: string, sessionId?: string): Promise<EmotionCheckin[]> {
+  let query = supabase
+    .from("emotion_checkins")
+    .select("*")
+    .eq("user_id", userId)
+    .order("timestamp", { ascending: false })
+
+  if (sessionId) {
+    query = query.eq("session_id", sessionId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error loading emotion checkins:", error)
+    return []
+  }
+
+  return data || []
 }
