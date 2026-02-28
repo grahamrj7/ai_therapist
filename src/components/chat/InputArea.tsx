@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Send, Sparkles, Wind, Activity } from "lucide-react"
+import { Send, Sparkles, Wind, Activity, Sliders } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ const QUICK_ACTIONS = [
 
 const ACTIVITIES = [
   { id: "breathing", label: "Breathe", icon: Wind, description: "Box breathing exercise" },
+  { id: "emotions", label: "Emotions", icon: Sliders, description: "Track how you're feeling" },
 ]
 
 export function InputArea({ 

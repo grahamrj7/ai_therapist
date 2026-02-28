@@ -4,6 +4,7 @@ import { SettingsDialog } from "@/components/layout/SettingsDialog"
 import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
 import { BreathingExercise } from "@/components/activities/BreathingExercise"
+import { EmotionScaleSliders } from "@/components/activities/EmotionScaleSliders"
 import { TTSPrompt } from "@/components/TTSPrompt"
 import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
@@ -187,6 +188,8 @@ export function ChatApp() {
         <div className="flex-1 flex flex-col relative overflow-hidden">
           {activeActivity === "breathing" ? (
             <BreathingExercise onClose={() => setActiveActivity(null)} voiceName={settings.voiceName} />
+          ) : activeActivity === "emotions" ? (
+            <EmotionScaleSliders onClose={() => setActiveActivity(null)} />
           ) : (
             <>
               <MessagesList 
