@@ -288,7 +288,7 @@ export function SettingsDialog({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-0 right-0 top-1/2 -translate-y-1/2 mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl z-50 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
+            className="fixed left-0 right-0 top-0 sm:top-1/2 sm:-translate-y-1/2 mx-auto w-full sm:max-w-md bg-white rounded-none sm:rounded-2xl shadow-xl z-50 overflow-hidden max-h-[100vh] sm:max-h-[85vh] flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-linen">
@@ -320,7 +320,7 @@ export function SettingsDialog({
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {/* General Tab */}
               {activeTab === 'general' && (
                 <div className="space-y-6">
