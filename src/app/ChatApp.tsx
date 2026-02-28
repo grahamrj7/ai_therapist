@@ -121,15 +121,33 @@ export function ChatApp() {
     "i need to calm down",
   ]
 
+  // Keywords that indicate user wants to track emotions
+  const EMOTION_TRACKING_KEYWORDS = [
+    "how am i feeling",
+    "track my emotions",
+    "emotion check",
+    "how do i feel",
+    "check in on my mood",
+    "how am i doing emotionally",
+    "emotion tracking",
+    "mood check",
+    "how are my emotions",
+    "feeling check",
+  ]
+
   const handleSendMessage = (content: string) => {
     const lowerContent = content.toLowerCase()
     const isBreathingRequest = BREATHING_REQUEST_KEYWORDS.some(keyword => 
       lowerContent.includes(keyword)
     )
+    const isEmotionRequest = EMOTION_TRACKING_KEYWORDS.some(keyword => 
+      lowerContent.includes(keyword)
+    )
     
     if (isBreathingRequest) {
-      // User explicitly asked for breathing exercise
       setActiveActivity("breathing")
+    } else if (isEmotionRequest) {
+      setActiveActivity("emotions")
     } else {
       sendMessage(content)
     }
