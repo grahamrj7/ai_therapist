@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
+import { saveSession, loadSessions } from "@/lib/db"
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ""
 
@@ -53,10 +54,11 @@ Remember: You're ${therapistName}, the therapist providing a safe space for your
 
 interface UseChatOptions {
   therapistName?: string
+  userId?: string
 }
 
 export function useChat(options: UseChatOptions = {}) {
-  const { therapistName = "Abby" } = options
+  const { therapistName = "Abby", userId } = options
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string>("")
   const [messages, setMessages] = useState<Message[]>([])
@@ -80,37 +82,58 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [therapistName])
 
-  // Load sessions from localStorage
+  // Load sessions from localStorage or Supabase
   useEffect(() => {
-    const savedSessions = localStorage.getItem('therapy_sessions')
-    if (savedSessions) {
-      const parsed = JSON.parse(savedSessions)
-      const sessionsArray = Object.values(parsed) as Session[]
-      setSessions(sessionsArray.sort((a, b) => b.timestamp - a.timestamp))
+    async function load() {
+      if (userId) {
+        const supabaseSessions = await loadSessions(userId)
+        if (supabaseSessions.length > 0) {
+          setSessions(supabaseSessions)
+          const today = getTodayDate()
+          const todaySession = supabaseSessions.find(s => s.date === today)
+          if (todaySession) {
+            setCurrentSessionId(todaySession.id)
+            setMessages(todaySession.messages)
+            initializeChat(todaySession.messages)
+            return
+          } else if (supabaseSessions.length > 0) {
+            setCurrentSessionId(supabaseSessions[0].id)
+            setMessages(supabaseSessions[0].messages)
+            initializeChat(supabaseSessions[0].messages)
+            return
+          }
+        }
+      }
 
-      // Set current session to today or most recent
-      const today = getTodayDate()
-      const todaySession = sessionsArray.find(s => s.date === today)
-      if (todaySession) {
-        setCurrentSessionId(todaySession.id)
-        setMessages(todaySession.messages)
-        initializeChat(todaySession.messages)
-      } else if (sessionsArray.length > 0) {
-        setCurrentSessionId(sessionsArray[0].id)
-        setMessages(sessionsArray[0].messages)
-        initializeChat(sessionsArray[0].messages)
+      const savedSessions = localStorage.getItem('therapy_sessions')
+      if (savedSessions) {
+        const parsed = JSON.parse(savedSessions)
+        const sessionsArray = Object.values(parsed) as Session[]
+        setSessions(sessionsArray.sort((a, b) => b.timestamp - a.timestamp))
+
+        const today = getTodayDate()
+        const todaySession = sessionsArray.find(s => s.date === today)
+        if (todaySession) {
+          setCurrentSessionId(todaySession.id)
+          setMessages(todaySession.messages)
+          initializeChat(todaySession.messages)
+        } else if (sessionsArray.length > 0) {
+          setCurrentSessionId(sessionsArray[0].id)
+          setMessages(sessionsArray[0].messages)
+          initializeChat(sessionsArray[0].messages)
+        }
+      } else {
+        const welcomeMessage: Message = {
+          id: generateId(),
+          role: "bot",
+          content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
+          timestamp: Date.now(),
+        }
+        setMessages([welcomeMessage])
       }
-    } else {
-      // No saved sessions - show welcome message for fresh start
-      const welcomeMessage: Message = {
-        id: generateId(),
-        role: "bot",
-        content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
-        timestamp: Date.now(),
-      }
-      setMessages([welcomeMessage])
     }
-  }, [])
+    load()
+  }, [userId])
 
   const initializeChat = (history: Message[] = []) => {
     if (!genAIRef.current) return
@@ -138,13 +161,19 @@ export function useChat(options: UseChatOptions = {}) {
     chatRef.current = model.startChat({ history: geminiHistory })
   }
 
-  const saveSessions = useCallback((newSessions: Session[]) => {
+  const saveSessions = useCallback(async (newSessions: Session[]) => {
     const sessionsObj = newSessions.reduce((acc, session) => {
       acc[session.id] = session
       return acc
     }, {} as Record<string, Session>)
     localStorage.setItem('therapy_sessions', JSON.stringify(sessionsObj))
-  }, [])
+
+    if (userId) {
+      for (const session of newSessions) {
+        await saveSession(userId, session)
+      }
+    }
+  }, [userId])
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || !chatRef.current) return

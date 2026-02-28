@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSettings } from "@/hooks/useSettings"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useTextToSpeech } from "@/hooks/useTextToSpeech"
+import { saveUserProfile } from "@/lib/db"
 
 export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
@@ -29,13 +30,20 @@ export function ChatApp() {
     createNewSession,
     selectSession,
     setInterimText,
-  } = useChat({ therapistName: settings.therapistName })
+  } = useChat({ therapistName: settings.therapistName, userId: user?.uid })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const [activeActivity, setActiveActivity] = useState<string | null>(null)
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
   const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled, voiceName: settings.voiceName })
+
+  // Save user profile to Supabase on auth change
+  useEffect(() => {
+    if (user) {
+      saveUserProfile({ uid: user.uid, displayName: user.displayName, email: user.email, photoURL: user.photoURL })
+    }
+  }, [user])
 
   // Show TTS prompt on first load after a delay
   useEffect(() => {
