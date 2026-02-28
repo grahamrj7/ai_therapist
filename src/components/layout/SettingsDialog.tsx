@@ -288,7 +288,7 @@ export function SettingsDialog({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-xl z-50 overflow-hidden max-h-[85vh] flex flex-col"
+            className="fixed left-0 right-0 top-1/2 -translate-y-1/2 mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl z-50 overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-linen">
@@ -395,40 +395,46 @@ export function SettingsDialog({
                     </div>
 
                     {/* Voice Selection - only show when TTS is enabled */}
-                    {ttsEnabled && availableVoices.length > 0 && onVoiceChange && (
+                    {ttsEnabled && (
                       <div className="space-y-3 pt-4 border-t border-linen">
                         <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
                           <Mic className="h-4 w-4 text-terracotta" />
                           Voice
                         </label>
-                        <div className="max-h-40 overflow-y-auto space-y-1 border border-linen rounded-lg p-2">
-                          {availableVoices.map((voice) => (
-                            <div
-                              key={voice.name}
-                              onClick={() => onVoiceChange(voice.name)}
-                              className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
-                                voiceName === voice.name
-                                  ? 'bg-terracotta/10 border border-terracotta'
-                                  : 'hover:bg-cream border border-transparent'
-                              }`}
-                            >
-                              <div>
-                                <p className="font-medium text-text-primary text-sm">{voice.name}</p>
-                                <p className="text-xs text-text-muted">{voice.lang}</p>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  previewVoice(voice.name)
-                                }}
-                                className="p-1.5 hover:bg-white rounded-full transition-colors"
-                                title="Preview voice"
+                        {availableVoices.length === 0 ? (
+                          <p className="text-sm text-text-muted bg-cream rounded-lg p-3">
+                            Loading voices... If no voices appear, your browser may not support speech synthesis.
+                          </p>
+                        ) : (
+                          <div className="max-h-48 sm:max-h-40 overflow-y-auto space-y-1 border border-linen rounded-lg p-2">
+                            {availableVoices.map((voice) => (
+                              <div
+                                key={voice.name}
+                                onClick={() => onVoiceChange?.(voice.name)}
+                                className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
+                                  voiceName === voice.name
+                                    ? 'bg-terracotta/10 border border-terracotta'
+                                    : 'hover:bg-cream border border-transparent'
+                                }`}
                               >
-                                <Volume2 className="h-4 w-4 text-terracotta" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                                <div>
+                                  <p className="font-medium text-text-primary text-sm">{voice.name}</p>
+                                  <p className="text-xs text-text-muted">{voice.lang}</p>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    previewVoice(voice.name)
+                                  }}
+                                  className="p-1.5 hover:bg-white rounded-full transition-colors"
+                                  title="Preview voice"
+                                >
+                                  <Volume2 className="h-4 w-4 text-terracotta" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
