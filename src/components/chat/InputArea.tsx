@@ -65,9 +65,9 @@ export function InputArea({
   }
 
   return (
-    <div className="bg-white border-t border-linen px-6 py-5 space-y-4">
+    <div className="bg-white border-t border-linen px-3 sm:px-6 py-3 sm:py-5 space-y-3 sm:space-y-4">
       {/* Toolbar: Voice Recorder (center) + Activities (right) */}
-      <div className="grid grid-cols-3 items-center">
+      <div className="grid grid-cols-3 items-center gap-2">
         {/* Left - Empty spacer */}
         <div />
 
@@ -86,14 +86,14 @@ export function InputArea({
               <button
                 onClick={() => setShowActivitiesMenu(!showActivitiesMenu)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-200",
+                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-full border transition-all duration-200 text-sm",
                   showActivitiesMenu 
                     ? "bg-terracotta text-white border-terracotta" 
                     : "bg-cream text-text-secondary border-linen hover:bg-sand hover:border-terracotta-light"
                 )}
               >
                 <Activity className="h-4 w-4" />
-                <span className="text-sm font-medium">Activities</span>
+                <span className="hidden sm:inline font-medium">Activities</span>
               </button>
 
               {/* Activities Dropdown Menu */}
@@ -158,7 +158,7 @@ export function InputArea({
               <button
                 key={action}
                 onClick={() => handleQuickAction(action)}
-                className="px-4 py-2 text-sm text-text-secondary bg-cream border border-linen rounded-full hover:bg-sand hover:border-terracotta-light transition-all duration-200"
+                className="px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-text-secondary bg-cream border border-linen rounded-full hover:bg-sand hover:border-terracotta-light transition-all duration-200 whitespace-nowrap"
               >
                 {action}
               </button>
@@ -168,7 +168,7 @@ export function InputArea({
       </AnimatePresence>
 
       {/* Text Input */}
-      <div className="flex gap-3 items-end">
+      <div className="flex gap-2 sm:gap-3 items-end">
         <div className="flex-1 relative">
           <Input
             value={interimText || input}
@@ -176,25 +176,25 @@ export function InputArea({
             onKeyDown={handleKeyDown}
             placeholder="Share how you're feeling..."
             disabled={isTyping || isRecording}
-            className="pr-12 py-6 text-base"
+            className="pr-10 sm:pr-12 py-4 sm:py-6 text-base"
           />
-          <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-terracotta/40" />
+          <Sparkles className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-terracotta/40" />
         </div>
         
         <Button
           onClick={handleSend}
           disabled={!input.trim() || isTyping}
           className={cn(
-            "h-12 px-6 rounded-xl transition-all duration-300",
+            "h-12 px-3 sm:px-6 rounded-xl transition-all duration-300",
             !input.trim() && "opacity-50"
           )}
         >
-          <Send className="h-5 w-5 mr-2" />
-          Send
+          <Send className="h-5 w-5" />
+          <span className="hidden sm:inline ml-2">Send</span>
         </Button>
       </div>
 
-      <p className="text-center text-xs text-text-muted">
+      <p className="text-center text-xs text-text-muted px-2">
         {therapistName} is here to listen and support you. For emergencies, please contact emergency services.
       </p>
     </div>

@@ -40,17 +40,17 @@ export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProp
       )}
     >
       {!isUser && (
-        <Avatar className="h-10 w-10 shrink-0 shadow-soft">
-          <AvatarFallback className="bg-gradient-to-br from-terracotta to-terracotta-dark text-white text-sm font-semibold">
+        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 shadow-soft">
+          <AvatarFallback className="bg-gradient-to-br from-terracotta to-terracotta-dark text-white text-xs sm:text-sm font-semibold">
             A
           </AvatarFallback>
         </Avatar>
       )}
       
-      <div className="flex flex-col gap-2 max-w-[75%]">
+      <div className="flex flex-col gap-2 max-w-[85%] sm:max-w-[75%]">
         <div
           className={cn(
-            "px-5 py-3.5 text-[15px] leading-relaxed shadow-soft",
+            "px-4 sm:px-5 py-3 text-sm sm:text-[15px] leading-relaxed shadow-soft",
             isUser
               ? "bg-terracotta text-white rounded-2xl rounded-tr-sm"
               : "bg-white text-text-primary border border-linen rounded-2xl rounded-tl-sm"
@@ -66,10 +66,11 @@ export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProp
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
             onClick={onTriggerBreathing}
-            className="flex items-center gap-2 self-start px-4 py-2 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-full text-sm font-medium transition-colors border border-terracotta/20"
+            className="flex items-center gap-2 self-start px-3 sm:px-4 py-2 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-full text-xs sm:text-sm font-medium transition-colors border border-terracotta/20"
           >
-            <Wind className="h-4 w-4" />
-            Start Breathing Exercise
+            <Wind className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Start Breathing Exercise</span>
+            <span className="sm:hidden">Breathe</span>
           </motion.button>
         )}
       </div>

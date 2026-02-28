@@ -50,23 +50,30 @@ export function AppLayout({
       )}
 
       {/* Sidebar */}
-      <Sidebar
-        sessions={sessions}
-        currentSessionId={currentSessionId}
-        onSelectSession={(id) => {
-          onSelectSession(id)
-          setSidebarOpen(false)
-        }}
-        onNewSession={() => {
-          onNewSession()
-          setSidebarOpen(false)
-        }}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        user={user}
-        onSignOut={onSignOut}
-        onSignIn={onSignIn}
-      />
+      <aside 
+        className={cn(
+          "w-[280px] sm:w-[300px] bg-sand border-r border-linen flex flex-col h-full shadow-[2px_0_20px_rgba(0,0,0,0.04)] transition-transform duration-300 ease-gentle z-20",
+          !sidebarOpen && "-translate-x-full lg:translate-x-0 fixed lg:relative"
+        )}
+      >
+        <Sidebar
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSelectSession={(id) => {
+            onSelectSession(id)
+            setSidebarOpen(false)
+          }}
+          onNewSession={() => {
+            onNewSession()
+            setSidebarOpen(false)
+          }}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          user={user}
+          onSignOut={onSignOut}
+          onSignIn={onSignIn}
+        />
+      </aside>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 bg-cream">
