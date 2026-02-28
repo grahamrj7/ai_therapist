@@ -44,16 +44,16 @@ export function AppLayout({
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-10 lg:hidden"
+          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - always fixed on mobile, slides in/out */}
       <aside 
         className={cn(
-          "w-[280px] sm:w-[300px] bg-sand border-r border-linen flex flex-col h-full shadow-[2px_0_20px_rgba(0,0,0,0.04)] transition-transform duration-300 ease-gentle z-20",
-          !sidebarOpen && "-translate-x-full lg:translate-x-0 fixed lg:relative"
+          "fixed lg:relative top-0 left-0 h-full w-[280px] sm:w-[300px] bg-sand border-r border-linen flex flex-col shadow-[2px_0_20px_rgba(0,0,0,0.04)] transition-transform duration-300 ease-gentle z-40",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <Sidebar
