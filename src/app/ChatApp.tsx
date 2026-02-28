@@ -198,6 +198,29 @@ export function ChatApp() {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
+  // Require sign in to use the app
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-terracotta to-terracotta-dark flex items-center justify-center mx-auto">
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h2 className="font-display text-xl text-text-primary">Sign in required</h2>
+          <p className="text-text-secondary">
+            Please sign in with Google to access your safe space and sync your sessions across devices.
+          </p>
+          <button
+            onClick={signIn}
+            className="px-6 py-3 bg-terracotta text-white rounded-full font-medium hover:bg-terracotta/90 transition-colors"
+          >
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <AppLayout
