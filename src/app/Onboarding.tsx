@@ -3,6 +3,7 @@ import { Heart, Volume2, User, ArrowRight, Mic } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/hooks/useAuth"
 
 interface OnboardingProps {
   onComplete: (name: string, ttsEnabled: boolean, voiceName?: string) => void
@@ -15,6 +16,7 @@ interface VoiceOption {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
+  const { signIn, isAuthenticated, user, loading: authLoading } = useAuth()
   const [name, setName] = useState("Abby")
   const [ttsEnabled, setTtsEnabled] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState<string>("")
@@ -119,6 +121,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleNext = () => {
     if (step === 1) {
+      if (!isAuthenticated) return
       setStep(2)
     } else if (step === 2 && ttsEnabled) {
       setStep(3)
@@ -133,6 +136,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     } else if (step === 3) {
       setStep(2)
     }
+  }
+
+  const handleSignIn = async () => {
+    await signIn()
   }
 
   return (
@@ -158,7 +165,34 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </p>
         </div>
 
-        {step === 1 && (
+        {step === 1 && !isAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                <User className="h-4 w-4 text-terracotta" />
+                Sign in to get started
+              </label>
+              <p className="text-sm text-text-muted">
+                Sign in with Google to sync your sessions across devices
+              </p>
+            </div>
+
+            <Button 
+              onClick={handleSignIn} 
+              className="w-full"
+              size="lg"
+              disabled={authLoading}
+            >
+              {authLoading ? "Signing in..." : "Continue with Google"}
+            </Button>
+          </motion.div>
+        )}
+
+        {step === 1 && isAuthenticated && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -182,7 +216,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </div>
 
             <Button 
-              onClick={handleNext} 
+              onClick={() => setStep(2)} 
               className="w-full"
               size="lg"
             >
@@ -328,7 +362,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         <div className="flex justify-center gap-2 mt-8">
           <div className={`h-2 w-2 rounded-full transition-colors ${step === 1 ? 'bg-terracotta' : 'bg-linen'}`} />
           <div className={`h-2 w-2 rounded-full transition-colors ${step === 2 ? 'bg-terracotta' : 'bg-linen'}`} />
-          {ttsEnabled && (
+          {step >= 2 && ttsEnabled && (
             <div className={`h-2 w-2 rounded-full transition-colors ${step === 3 ? 'bg-terracotta' : 'bg-linen'}`} />
           )}
         </div>
