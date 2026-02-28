@@ -145,8 +145,7 @@ export function EmotionScaleSliders({
                       {emotion.label}
                     </span>
                   </div>
-                  <div className={cn("flex items-center gap-1", getTrendColor(emotion.value))}>
-                    {getTrendIcon(emotion.value)}
+                  <div className={cn("flex items-center", getTrendColor(emotion.value))}>
                     <span className="text-sm font-semibold">{emotion.value}%</span>
                   </div>
                 </div>
