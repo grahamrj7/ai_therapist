@@ -363,6 +363,15 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }, [sessions])
 
+  const triggerEmotionResponse = useCallback(async (emotions: { name: string; value: number }[]) => {
+    const emotionSummary = emotions
+      .map(e => `${e.name}: ${e.value}/10`)
+      .join(", ")
+    
+    const prompt = `The user just completed an emotion check-in. Here are their results: ${emotionSummary}. Please acknowledge this, provide a brief supportive response, and ask a follow-up question based on their results.`
+    await sendMessage(prompt)
+  }, [sendMessage])
+
   return {
     sessions,
     currentSessionId,
@@ -377,5 +386,6 @@ export function useChat(options: UseChatOptions = {}) {
     createNewSession,
     selectSession,
     setInterimText,
+    triggerEmotionResponse,
   }
 }

@@ -35,6 +35,7 @@ export function ChatApp() {
     createNewSession,
     selectSession,
     setInterimText,
+    triggerEmotionResponse,
   } = useChat({ therapistName: settings.therapistName, userId: user?.uid, onActivityTriggered: setActiveActivity })
   
   const spokenMessageIds = useRef<Set<string>>(new Set())
@@ -172,6 +173,8 @@ export function ChatApp() {
     if (user?.uid) {
       try {
         await saveEmotionCheckin(user.uid, emotions, currentSessionId || undefined)
+        setActiveActivity(null)
+        await triggerEmotionResponse(emotions)
       } catch (error) {
         console.error("Error saving emotion checkin:", error)
       }
