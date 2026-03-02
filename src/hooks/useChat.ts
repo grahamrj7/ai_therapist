@@ -200,7 +200,7 @@ export function useChat(options: UseChatOptions = {}) {
       todaySession = {
         id: generateId(),
         date: today,
-        messages: [],
+        messages: messages, // Preserve current messages when creating new session
         timestamp: Date.now(),
       }
       const updatedSessions = [todaySession, ...sessions]
