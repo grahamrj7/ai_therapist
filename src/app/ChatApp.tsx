@@ -18,6 +18,10 @@ export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
   const { settings, updateTherapistName, setTTSEnabled, setHasSeenTTSPrompt, completeOnboarding, updateVoiceName, resetSettings, isLoaded } = useSettings()
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showTTSPrompt, setShowTTSPrompt] = useState(false)
+  const [activeActivity, setActiveActivity] = useState<string | null>(null)
+
   const {
     sessions,
     currentSessionId,
@@ -32,9 +36,7 @@ export function ChatApp() {
     selectSession,
     setInterimText,
   } = useChat({ therapistName: settings.therapistName, userId: user?.uid, onActivityTriggered: setActiveActivity })
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [showTTSPrompt, setShowTTSPrompt] = useState(false)
-  const [activeActivity, setActiveActivity] = useState<string | null>(null)
+  
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
   const { speak } = useTextToSpeech({ enabled: settings.ttsEnabled, voiceName: settings.voiceName })
