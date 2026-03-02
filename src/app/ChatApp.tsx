@@ -173,12 +173,12 @@ export function ChatApp() {
     if (user?.uid) {
       try {
         await saveEmotionCheckin(user.uid, emotions, currentSessionId || undefined)
-        setActiveActivity(null)
-        await triggerEmotionResponse(emotions)
       } catch (error) {
         console.error("Error saving emotion checkin:", error)
       }
     }
+    setActiveActivity(null)
+    await triggerEmotionResponse(emotions)
   }
 
   const handleClearData = () => {
