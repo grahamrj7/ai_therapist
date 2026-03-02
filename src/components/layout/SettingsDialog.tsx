@@ -67,6 +67,9 @@ export function SettingsDialog({
       const voices = synth.getVoices()
       console.log('[Settings] Total voices available:', voices.length)
       
+      // If no voices yet, don't update state (keep loading)
+      if (voices.length === 0) return
+      
       // Filter to only English voices that contain one of the allowed names
       const filteredVoices = voices
         .filter(v => {
@@ -96,19 +99,19 @@ export function SettingsDialog({
       loadVoices()
     }
     
-    // Also set up the event listener for when voices load
+    // Set up the event listener for when voices load
     synth.onvoiceschanged = loadVoices
     
-    // Fallback: try loading after a short delay
-    const timeoutId = setTimeout(() => {
-      if (availableVoices.length === 0) {
-        console.log('[Settings] Retrying voice load after delay...')
-        loadVoices()
-      }
-    }, 500)
+    // Multiple fallbacks for mobile browsers
+    const intervals = [
+      setTimeout(loadVoices, 100),
+      setTimeout(loadVoices, 500),
+      setTimeout(loadVoices, 1000),
+      setTimeout(loadVoices, 2000),
+    ]
     
     return () => {
-      clearTimeout(timeoutId)
+      intervals.forEach(clearTimeout)
     }
   }, [])
 

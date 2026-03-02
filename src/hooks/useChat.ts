@@ -69,10 +69,11 @@ Remember: You're ${therapistName}, the therapist providing a safe space for your
 interface UseChatOptions {
   therapistName?: string
   userId?: string
+  onActivityTriggered?: (activity: 'breathing' | 'emotions') => void
 }
 
 export function useChat(options: UseChatOptions = {}) {
-  const { therapistName = "Abby", userId } = options
+  const { therapistName = "Abby", userId, onActivityTriggered } = options
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string>("")
   const [messages, setMessages] = useState<Message[]>([])
@@ -260,6 +261,19 @@ export function useChat(options: UseChatOptions = {}) {
       const finalMessages = [...updatedMessages, botMessage]
       setMessages(finalMessages)
       setIsTyping(false)
+
+      // Check if AI response suggests an activity
+      if (onActivityTriggered) {
+        const lowerResponse = responseText.toLowerCase()
+        const breathingKeywords = ['breathing exercise', 'box breathing', 'guided breathing', 'deep breathing', 'breathe with me', 'calm down', 'breathing technique']
+        const emotionKeywords = ['emotion check', 'check in', 'how are you feeling', 'track your emotions', 'mood check', 'how am i feeling']
+
+        if (breathingKeywords.some(kw => lowerResponse.includes(kw))) {
+          onActivityTriggered('breathing')
+        } else if (emotionKeywords.some(kw => lowerResponse.includes(kw))) {
+          onActivityTriggered('emotions')
+        }
+      }
 
       // Update session with bot response
       const sessionToUpdateForBot = targetSession || todaySession

@@ -31,7 +31,7 @@ export function ChatApp() {
     createNewSession,
     selectSession,
     setInterimText,
-  } = useChat({ therapistName: settings.therapistName, userId: user?.uid })
+  } = useChat({ therapistName: settings.therapistName, userId: user?.uid, onActivityTriggered: setActiveActivity })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const [activeActivity, setActiveActivity] = useState<string | null>(null)
