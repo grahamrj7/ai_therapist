@@ -369,8 +369,44 @@ export function useChat(options: UseChatOptions = {}) {
       .join(", ")
     
     const prompt = `The user just completed an emotion check-in. Here are their results: ${emotionSummary}. Please acknowledge this, provide a brief supportive response, and ask a follow-up question based on their results.`
-    await sendMessage(prompt)
-  }, [sendMessage])
+    
+    const botMessage: Message = {
+      id: generateId(),
+      role: "bot",
+      content: "",
+      timestamp: Date.now(),
+    }
+
+    setIsTyping(true)
+
+    try {
+      const result = await chatRef.current.sendMessage(prompt)
+      const response = await result.response
+      const responseText = response.text()
+
+      botMessage.content = responseText
+      
+      const updatedMessages = [...messages, botMessage]
+      setMessages(updatedMessages)
+      setIsTyping(false)
+
+      // Update session
+      const today = getTodayDate()
+      const todaySession = sessions.find(s => s.date === today)
+      if (todaySession) {
+        const finalSessions = sessions.map(s => 
+          s.id === todaySession.id 
+            ? { ...s, messages: updatedMessages, timestamp: Date.now() }
+            : s
+        )
+        setSessions(finalSessions)
+        saveSessions(finalSessions)
+      }
+    } catch (error) {
+      console.error("Error triggering emotion response:", error)
+      setIsTyping(false)
+    }
+  }, [messages, sessions])
 
   return {
     sessions,
