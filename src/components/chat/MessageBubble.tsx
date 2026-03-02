@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { Wind } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Message } from "@/types"
@@ -56,7 +57,7 @@ export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProp
               : "bg-white text-text-primary border border-linen rounded-2xl rounded-tl-sm"
           )}
         >
-          {message.content}
+          <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
         
         {/* Breathing Exercise Button */}
