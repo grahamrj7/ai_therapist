@@ -47,7 +47,7 @@ const SOUNDS: Sound[] = [
     name: "Fireplace", 
     icon: <Flame className="h-6 w-6" />,
     color: "bg-orange-500",
-    url: "https://orangefreesounds.com/wp-content/uploads/2022/10/Fire-crackling-sound-effect.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2025/04/Realistic-fireplace-sound-effect.mp3"
   },
   { 
     id: "stream", 
