@@ -19,21 +19,21 @@ const SOUNDS: Sound[] = [
     name: "Rain", 
     icon: <CloudRain className="h-6 w-6" />,
     color: "bg-blue-500",
-    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/Rain-and-thunder-sound.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/07/Falling-rain-sound-effect.mp3"
   },
   { 
     id: "ocean", 
     name: "Ocean Waves", 
     icon: <Waves className="h-6 w-6" />,
     color: "bg-teal-500",
-    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/Ocean-waves-sound.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2025/07/Gentle-relaxing-ocean-waves-hitting-the-shore-sound-effect.mp3"
   },
   { 
     id: "wind", 
     name: "Wind", 
     icon: <Wind className="h-6 w-6" />,
     color: "bg-slate-400",
-    url: "https://orangefreesounds.com/wp-content/uploads/2022/11/Wind-blowing-in-the-trees-1.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2014/11/Wind-blowing.mp3"
   },
   { 
     id: "forest", 
@@ -54,7 +54,7 @@ const SOUNDS: Sound[] = [
     name: "Stream", 
     icon: <Droplets className="h-6 w-6" />,
     color: "bg-cyan-500",
-    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/River-stream-sound.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2025/06/Fountain-sound-effect.mp3"
   },
 ]
 
