@@ -19,42 +19,42 @@ const SOUNDS: Sound[] = [
     name: "Rain", 
     icon: <CloudRain className="h-6 w-6" />,
     color: "bg-blue-500",
-    url: "https://cdn.pixabay.com/audio/2022/05/16/audio_460a0e0e18.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/Rain-and-thunder-sound.mp3"
   },
   { 
     id: "ocean", 
     name: "Ocean Waves", 
     icon: <Waves className="h-6 w-6" />,
     color: "bg-teal-500",
-    url: "https://cdn.pixabay.com/audio/2022/06/07/audio_b9bd4170e0.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/Ocean-waves-sound.mp3"
   },
   { 
     id: "wind", 
     name: "Wind", 
     icon: <Wind className="h-6 w-6" />,
     color: "bg-slate-400",
-    url: "https://cdn.pixabay.com/audio/2022/10/30/audio_f3d731384b.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/11/Wind-blowing-in-the-trees-1.mp3"
   },
   { 
     id: "forest", 
     name: "Forest", 
     icon: <Trees className="h-6 w-6" />,
     color: "bg-green-600",
-    url: "https://cdn.pixabay.com/audio/2021/09/10/audio_dc39bcc8b0.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2026/01/Relaxing-summer-forest-ambience.mp3"
   },
   { 
     id: "fire", 
     name: "Fireplace", 
     icon: <Flame className="h-6 w-6" />,
     color: "bg-orange-500",
-    url: "https://cdn.pixabay.com/audio/2024/01/15/audio_8d2a8e8c4e.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/10/Fire-crackling-sound-effect.mp3"
   },
   { 
     id: "stream", 
     name: "Stream", 
     icon: <Droplets className="h-6 w-6" />,
     color: "bg-cyan-500",
-    url: "https://cdn.pixabay.com/audio/2022/03/10/audio_2dde8e8c0b.mp3"
+    url: "https://orangefreesounds.com/wp-content/uploads/2022/03/River-stream-sound.mp3"
   },
 ]
 
