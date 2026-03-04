@@ -5,6 +5,7 @@ import { MessagesList } from "@/components/chat/MessagesList"
 import { InputArea } from "@/components/chat/InputArea"
 import { BreathingExercise } from "@/components/activities/BreathingExercise"
 import { EmotionScaleSliders, type EmotionScale } from "@/components/activities/EmotionScaleSliders"
+import { SoundTherapy } from "@/components/activities/SoundTherapy"
 import { TTSPrompt } from "@/components/TTSPrompt"
 import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
@@ -249,6 +250,8 @@ export function ChatApp() {
               onClose={() => setActiveActivity(null)} 
               onSave={handleSaveEmotions}
             />
+          ) : activeActivity === "sound" ? (
+            <SoundTherapy onClose={() => setActiveActivity(null)} />
           ) : (
             <>
               <MessagesList 
