@@ -262,17 +262,19 @@ export function useChat(options: UseChatOptions = {}) {
       setMessages(finalMessages)
       setIsTyping(false)
 
-      // Check if AI response suggests an activity
+      // Check if AI response suggests an activity - delay to let user read/message
       if (onActivityTriggered) {
         const lowerResponse = responseText.toLowerCase()
         const breathingKeywords = ['breathing exercise', 'box breathing', 'guided breathing', 'deep breathing', 'breathe with me', 'calm down', 'breathing technique']
         const emotionKeywords = ['emotion check', 'check in', 'how are you feeling', 'track your emotions', 'mood check', 'how am i feeling']
 
-        if (breathingKeywords.some(kw => lowerResponse.includes(kw))) {
-          onActivityTriggered('breathing')
-        } else if (emotionKeywords.some(kw => lowerResponse.includes(kw))) {
-          onActivityTriggered('emotions')
-        }
+        setTimeout(() => {
+          if (breathingKeywords.some(kw => lowerResponse.includes(kw))) {
+            onActivityTriggered('breathing')
+          } else if (emotionKeywords.some(kw => lowerResponse.includes(kw))) {
+            onActivityTriggered('emotions')
+          }
+        }, 3000) // 3 second delay to let user read message and hear TTS
       }
 
       // Update session with bot response
