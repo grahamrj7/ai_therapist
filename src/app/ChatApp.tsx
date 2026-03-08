@@ -14,6 +14,7 @@ import { useSettings } from "@/hooks/useSettings"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useTextToSpeech } from "@/hooks/useTextToSpeech"
 import { saveUserProfile, saveEmotionCheckin } from "@/lib/db"
+import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 
 export function ChatApp() {
   const { user, signIn, signOut } = useAuth()
@@ -108,43 +109,12 @@ export function ChatApp() {
     }
   }, [interimTranscript, setInterimText])
 
-  // Keywords that indicate user wants to start breathing exercise
-  const BREATHING_REQUEST_KEYWORDS = [
-    "breathing exercise",
-    "box breathing",
-    "start breathing",
-    "do breathing",
-    "breathing technique",
-    "guided breathing",
-    "deep breathing",
-    "i want to breathe",
-    "let's breathe",
-    "help me breathe",
-    "breathe with me",
-    "calm me down",
-    "i need to calm down",
-  ]
-
-  // Keywords that indicate user wants to track emotions
-  const EMOTION_TRACKING_KEYWORDS = [
-    "how am i feeling",
-    "track my emotions",
-    "emotion check",
-    "how do i feel",
-    "check in on my mood",
-    "how am i doing emotionally",
-    "emotion tracking",
-    "mood check",
-    "how are my emotions",
-    "feeling check",
-  ]
-
   const handleSendMessage = (content: string) => {
     const lowerContent = content.toLowerCase()
-    const isBreathingRequest = BREATHING_REQUEST_KEYWORDS.some(keyword => 
+    const isBreathingRequest = ACTIVITY_KEYWORDS.breathing.some(keyword => 
       lowerContent.includes(keyword)
     )
-    const isEmotionRequest = EMOTION_TRACKING_KEYWORDS.some(keyword => 
+    const isEmotionRequest = ACTIVITY_KEYWORDS.emotions.some(keyword => 
       lowerContent.includes(keyword)
     )
     

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
 import { saveSession, loadSessions } from "@/lib/db"
+import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ""
 
@@ -265,16 +266,13 @@ export function useChat(options: UseChatOptions = {}) {
       // Check if AI response suggests an activity - delay to let user read/message
       if (onActivityTriggered) {
         const lowerResponse = responseText.toLowerCase()
-        const breathingKeywords = ['breathing exercise', 'box breathing', 'guided breathing', 'deep breathing', 'breathe with me', 'calm down', 'breathing technique']
-        const emotionKeywords = ['emotion check', 'check in', 'how are you feeling', 'track your emotions', 'mood check', 'how am i feeling']
-        const soundKeywords = ['ambient sounds', 'relaxation sounds', 'play some', 'listen to', 'sound therapy', 'put on some', 'nature sounds']
 
         setTimeout(() => {
-          if (breathingKeywords.some(kw => lowerResponse.includes(kw))) {
+          if (ACTIVITY_KEYWORDS.breathing.some(kw => lowerResponse.includes(kw))) {
             onActivityTriggered('breathing')
-          } else if (emotionKeywords.some(kw => lowerResponse.includes(kw))) {
+          } else if (ACTIVITY_KEYWORDS.emotions.some(kw => lowerResponse.includes(kw))) {
             onActivityTriggered('emotions')
-          } else if (soundKeywords.some(kw => lowerResponse.includes(kw))) {
+          } else if (ACTIVITY_KEYWORDS.sound.some(kw => lowerResponse.includes(kw))) {
             onActivityTriggered('sound')
           }
         }, 3000) // 3 second delay to let user read message and hear TTS
