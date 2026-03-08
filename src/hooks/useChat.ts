@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
 import { saveSession, loadSessions } from "@/lib/db"
 
@@ -80,7 +80,7 @@ export function useChat(options: UseChatOptions = {}) {
   const [isTyping, setIsTyping] = useState(false)
   const [interimText, setInterimText] = useState("")
   const [isFreshChat, setIsFreshChat] = useState(false)
-  const chatRef = useRef<any>(null)
+  const chatRef = useRef<ChatSession | null>(null)
   const genAIRef = useRef<GoogleGenerativeAI | null>(null)
 
   // Initialize Gemini
