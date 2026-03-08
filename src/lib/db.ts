@@ -17,8 +17,23 @@ export async function saveSession(userId: string, session: Session) {
     throw error
   }
 
-  for (const message of session.messages) {
-    await saveMessage(session.id, message)
+  if (session.messages.length > 0) {
+    const messagesData = session.messages.map(message => ({
+      id: message.id,
+      session_id: session.id,
+      role: message.role,
+      content: message.content,
+      timestamp: message.timestamp,
+    }))
+
+    const { error: messagesError } = await supabase
+      .from("messages")
+      .upsert(messagesData)
+
+    if (messagesError) {
+      console.error("Error saving messages:", messagesError)
+      throw messagesError
+    }
   }
 }
 
