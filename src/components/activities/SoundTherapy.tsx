@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { X, Play, Pause, Volume2, VolumeX, CloudRain, Waves, Wind, Trees, Flame, Droplets, Maximize2, Minimize2, Minus, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Howl } from "howler"
+import { Howl, type Howl as HowlType } from "howler"
 
 interface Sound {
   id: string
