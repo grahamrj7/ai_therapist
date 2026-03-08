@@ -4,6 +4,9 @@ import type { Message, Session } from "@/types"
 import { saveSession, loadSessions } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 
+const SYNC_CACHE_KEY = "therapy_sessions_sync"
+const SYNC_INTERVAL = 5 * 60 * 1000 // 5 minutes
+
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ""
 
 function getTodayDate(): string {
@@ -101,26 +104,7 @@ export function useChat(options: UseChatOptions = {}) {
   // Load sessions from localStorage or Supabase
   useEffect(() => {
     async function load() {
-      if (userId) {
-        const supabaseSessions = await loadSessions(userId)
-        if (supabaseSessions.length > 0) {
-          setSessions(supabaseSessions)
-          const today = getTodayDate()
-          const todaySession = supabaseSessions.find(s => s.date === today)
-          if (todaySession) {
-            setCurrentSessionId(todaySession.id)
-            setMessages(todaySession.messages)
-            initializeChat(todaySession.messages)
-            return
-          } else if (supabaseSessions.length > 0) {
-            setCurrentSessionId(supabaseSessions[0].id)
-            setMessages(supabaseSessions[0].messages)
-            initializeChat(supabaseSessions[0].messages)
-            return
-          }
-        }
-      }
-
+      // Load localStorage first (fast)
       const savedSessions = localStorage.getItem('therapy_sessions')
       if (savedSessions) {
         const parsed = JSON.parse(savedSessions)
@@ -146,6 +130,35 @@ export function useChat(options: UseChatOptions = {}) {
           timestamp: Date.now(),
         }
         setMessages([welcomeMessage])
+      }
+
+      // Then sync with Supabase if user is logged in and enough time has passed
+      if (userId) {
+        const lastSync = localStorage.getItem(SYNC_CACHE_KEY)
+        const now = Date.now()
+        
+        // Only sync if never synced or 5 minutes have passed
+        if (!lastSync || (now - parseInt(lastSync)) > SYNC_INTERVAL) {
+          const supabaseSessions = await loadSessions(userId)
+          if (supabaseSessions.length > 0) {
+            setSessions(supabaseSessions)
+            localStorage.setItem(SYNC_CACHE_KEY, now.toString())
+            
+            const today = getTodayDate()
+            const todaySession = supabaseSessions.find(s => s.date === today)
+            if (todaySession) {
+              setCurrentSessionId(todaySession.id)
+              setMessages(todaySession.messages)
+              initializeChat(todaySession.messages)
+            } else if (supabaseSessions.length > 0) {
+              setCurrentSessionId(supabaseSessions[0].id)
+              setMessages(supabaseSessions[0].messages)
+              initializeChat(supabaseSessions[0].messages)
+            }
+          } else {
+            localStorage.setItem(SYNC_CACHE_KEY, now.toString())
+          }
+        }
       }
     }
     load()
@@ -188,6 +201,8 @@ export function useChat(options: UseChatOptions = {}) {
       for (const session of newSessions) {
         await saveSession(userId, session)
       }
+      // Update sync timestamp after saving
+      localStorage.setItem(SYNC_CACHE_KEY, Date.now().toString())
     }
   }, [userId])
 
