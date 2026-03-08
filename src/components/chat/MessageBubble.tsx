@@ -78,3 +78,5 @@ export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProp
     </motion.div>
   )
 }
+
+MessageBubble.displayName = "MessageBubble"
