@@ -35,7 +35,7 @@ export function VoiceRecorder({ isRecording, onToggle }: VoiceRecorderProps) {
         variant={isRecording ? "destructive" : "default"}
         onClick={onToggle}
         className={cn(
-          "relative rounded-full h-16 w-16 shadow-glow transition-all duration-300",
+          "relative rounded-full h-16 w-16 shadow-glow transition-all duration-300 touch-manipulation",
           isRecording ? "bg-destructive hover:bg-destructive/90 animate-pulse" : "hover:shadow-glow-lg hover:-translate-y-0.5"
         )}
       >
@@ -61,3 +61,5 @@ export function VoiceRecorder({ isRecording, onToggle }: VoiceRecorderProps) {
     </div>
   )
 }
+
+VoiceRecorder.displayName = "VoiceRecorder"

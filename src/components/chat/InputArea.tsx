@@ -161,7 +161,8 @@ export function InputArea({
               <button
                 key={action}
                 onClick={() => handleQuickAction(action)}
-                className="px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-text-secondary bg-cream border border-linen rounded-full hover:bg-sand hover:border-terracotta-light transition-all duration-200 whitespace-nowrap"
+                onTouchStart={(e) => e.stopPropagation()}
+                className="px-4 py-2.5 sm:py-2 text-sm text-text-secondary bg-cream border border-linen rounded-full hover:bg-sand hover:border-terracotta-light transition-all duration-200 whitespace-nowrap touch-manipulation min-h-[44px]"
               >
                 {action}
               </button>
@@ -179,16 +180,16 @@ export function InputArea({
             onKeyDown={handleKeyDown}
             placeholder="Share how you're feeling..."
             disabled={isTyping || isRecording}
-            className="pr-10 sm:pr-12 py-4 sm:py-6 text-base"
+            className="pr-10 sm:pr-12 py-4 sm:py-6 text-base min-h-[52px] sm:min-h-[56px]"
           />
-          <Sparkles className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-terracotta/40" />
+          <Sparkles className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-terracotta/40 pointer-events-none" />
         </div>
         
         <Button
           onClick={handleSend}
           disabled={!input.trim() || isTyping}
           className={cn(
-            "h-12 px-3 sm:px-6 rounded-xl transition-all duration-300",
+            "h-14 px-5 sm:px-6 rounded-xl transition-all duration-300 min-w-[56px] sm:min-w-[auto]",
             !input.trim() && "opacity-50"
           )}
         >
@@ -197,9 +198,11 @@ export function InputArea({
         </Button>
       </div>
 
-      <p className="text-center text-xs text-text-muted px-2">
+      <p className="text-center text-xs text-text-muted px-2 pb-safe">
         {therapistName} is here to listen and support you. For emergencies, please contact emergency services.
       </p>
     </div>
   )
 }
+
+InputArea.displayName = "InputArea"
