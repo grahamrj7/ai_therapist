@@ -387,9 +387,9 @@ export function SoundTherapy({ onClose }: SoundTherapyProps) {
             "bg-white rounded-3xl overflow-hidden shadow-2xl",
             isFullscreen 
               ? "w-full h-full max-w-none rounded-none" 
-              : "max-w-md w-full max-h-[90vh]"
+              : "max-w-md w-full max-h-[90dvh] sm:max-h-[90vh]"
           )}
-          style={{ maxHeight: isFullscreen ? "100vh" : "90vh" }}
+          style={{ maxHeight: isFullscreen ? "100dvh" : "90vh" }}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-linen">
