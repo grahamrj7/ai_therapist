@@ -14,17 +14,25 @@ interface MessagesListProps {
 
 export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby", onTriggerBreathing }: MessagesListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const prevMessagesLengthRef = useRef(messages.length)
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      // Only auto-scroll if new message was added (not on initial load)
+      if (messages.length > prevMessagesLengthRef.current) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+      prevMessagesLengthRef.current = messages.length
     }
   }, [messages, isTyping])
 
   return (
     <div 
       ref={scrollRef}
-      className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6"
+      className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 overscroll-behavior-y-contain"
     >
       <AnimatePresence mode="popLayout">
         {messages.map((message) => (
@@ -71,3 +79,5 @@ export function MessagesList({ messages, isTyping, isFreshChat, therapistName = 
     </div>
   )
 }
+
+MessagesList.displayName = "MessagesList"
