@@ -343,32 +343,28 @@ export function useChat(options: UseChatOptions = {}) {
   }, [messages, sessions, currentSessionId, isFreshChat, saveSessions])
 
   const createNewSession = useCallback(() => {
-    // Check if today already has a session with messages
-    const today = getTodayDate()
-    const todaySession = sessions.find(s => s.date === today)
-    
-    if (todaySession && todaySession.messages.length > 0) {
-      // Use existing today's session
-      setCurrentSessionId(todaySession.id)
-      setMessages(todaySession.messages)
-      setIsFreshChat(false)
-      initializeChat(todaySession.messages)
-    } else {
-      // Start fresh with welcome message
-      const welcomeMessage: Message = {
-        id: generateId(),
-        role: "bot",
-        content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
-        timestamp: Date.now(),
-      }
-      setMessages([welcomeMessage])
-      setIsFreshChat(false)
-      initializeChat([welcomeMessage])
-      
-      if (todaySession) {
-        setCurrentSessionId(todaySession.id)
-      }
+    const welcomeMessage: Message = {
+      id: generateId(),
+      role: "bot",
+      content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
+      timestamp: Date.now(),
     }
+
+    // Create a brand new session
+    const newSession: Session = {
+      id: generateId(),
+      date: getTodayDate(),
+      messages: [welcomeMessage],
+      timestamp: Date.now(),
+    }
+
+    const updatedSessions = [newSession, ...sessions]
+    setSessions(updatedSessions)
+    setCurrentSessionId(newSession.id)
+    setMessages([welcomeMessage])
+    setIsFreshChat(true)
+    initializeChat([welcomeMessage])
+    saveSessions(updatedSessions)
   }, [sessions, therapistName])
 
   const selectSession = useCallback((sessionId: string) => {
