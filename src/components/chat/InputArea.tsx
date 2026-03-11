@@ -87,8 +87,9 @@ export function InputArea({
             <div className="relative">
               <button
                 onClick={() => setShowActivitiesMenu(!showActivitiesMenu)}
+                onTouchStart={(e) => e.stopPropagation()}
                 className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-full border transition-all duration-200 text-sm",
+                  "flex items-center gap-1.5 sm:gap-2 px-4 sm:px-4 py-2.5 sm:py-2 rounded-full border transition-all duration-200 text-sm touch-manipulation",
                   showActivitiesMenu 
                     ? "bg-terracotta text-white border-terracotta" 
                     : "bg-cream text-text-secondary border-linen hover:bg-sand hover:border-terracotta-light"
