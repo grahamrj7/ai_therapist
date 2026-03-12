@@ -84,13 +84,16 @@ const HEALTH_PATTERNS = [
   /i have (?:diabetes|anxiety|depression|adhd|bipolar|ocd)/i,
 ]
 
-// Emotion indicators
+// Emotion indicators - expanded list
 const EMOTION_KEYWORDS = {
-  anxiety: ['anxious', 'worried', 'nervous', 'panic', 'overwhelmed', 'stressed', 'fear', 'scared'],
-  sadness: ['sad', 'depressed', 'down', 'hopeless', 'heartbroken', 'grief', 'lonely'],
-  anger: ['angry', 'frustrated', 'annoyed', 'irritated', 'furious', 'mad'],
-  happiness: ['happy', 'joy', 'excited', 'grateful', 'blessed', 'content', 'peaceful'],
-  fatigue: ['tired', 'exhausted', 'drained', 'burnout', 'fatigue', 'drowsy'],
+  anxiety: ['anxious', 'worried', 'nervous', 'panic', 'overwhelmed', 'stressed', 'fear', 'scared', 'racing thoughts', 'uneasy', 'tense', 'apprehensive'],
+  sadness: ['sad', 'depressed', 'down', 'hopeless', 'heartbroken', 'grief', 'lonely', 'empty', 'numb', 'melancholy', 'disappointed'],
+  anger: ['angry', 'frustrated', 'annoyed', 'irritated', 'furious', 'mad', 'resentful', 'bitter', 'hostile', 'aggravated'],
+  happiness: ['happy', 'joy', 'excited', 'grateful', 'blessed', 'content', 'peaceful', 'calm', 'satisfied', 'optimistic', 'hopeful'],
+  fatigue: ['tired', 'exhausted', 'drained', 'burnout', 'fatigue', 'drowsy', 'sleepy', 'worn out', 'spent'],
+  confusion: ['confused', 'overwhelmed', 'lost', 'uncertain', 'unsure', 'stuck', 'mixed feelings', 'unclear'],
+  shame: ['ashamed', 'embarrassed', 'humiliated', 'guilty', 'regretful', 'self-conscious'],
+  love: ['love', 'affection', 'attached', 'devoted', 'caring', 'connected', 'intimate'],
 }
 
 // ============================================================================
@@ -315,6 +318,8 @@ export function extractTopics(userMessage: string, botResponse: string): Extract
     /that (?:helps|worked|works) (?:for me|well)/i,
     /i find (?:that|it) (?:helps|works)/i,
     /when i (?:do|try) (?:[\w\s]+) (?:it|i feel) (?:better|helps)/i,
+    /what helps is/i,
+    /i usually (?:[\w\s]+) when/i,
   ]
 
   for (const pattern of copingPatterns) {
@@ -324,6 +329,70 @@ export function extractTopics(userMessage: string, botResponse: string): Extract
         category: 'topic',
         importance: 5,
         confidence: 0.4,
+      })
+      break
+    }
+  }
+
+  // Look for relationship issues
+  const relationshipPatterns = [
+    /my (?:husband|wife|partner|boyfriend|girlfriend|friend|parent|sibling)/i,
+    /me and my (?:partner|husband|wife|boss|colleague)/i,
+    /relationship (?:issues|problems|with)/i,
+    /we (?:argue|fight|disagree)/i,
+    /communication (?:issues|problems|breakdown)/i,
+  ]
+
+  for (const pattern of relationshipPatterns) {
+    if (pattern.test(userMessage)) {
+      topics.push({
+        content: `User mentioned relationship topic: "${userMessage.substring(0, 80)}"`,
+        category: 'topic',
+        importance: 7,
+        confidence: 0.7,
+      })
+      break
+    }
+  }
+
+  // Look for work/career issues
+  const workPatterns = [
+    /work (?:stress|pressure|issues)/i,
+    /my (?:boss|colleague|coworker|job)/i,
+    /at (?:work|the office)/i,
+    /career (?:change|transition|growth)/i,
+    /job (?:loss|search|interview)/i,
+    /professional (?:life|work)/i,
+  ]
+
+  for (const pattern of workPatterns) {
+    if (pattern.test(userMessage)) {
+      topics.push({
+        content: `User mentioned work/career: "${userMessage.substring(0, 80)}"`,
+        category: 'topic',
+        importance: 6,
+        confidence: 0.6,
+      })
+      break
+    }
+  }
+
+  // Look for past experiences
+  const pastPatterns = [
+    /when i was (?:younger|a child|teen)/i,
+    /growing up/i,
+    /in the past/i,
+    /i used to ([\w\s]+)/i,
+    /my childhood/i,
+  ]
+
+  for (const pattern of pastPatterns) {
+    if (pattern.test(userMessage)) {
+      topics.push({
+        content: `User shared past experience`,
+        category: 'topic',
+        importance: 6,
+        confidence: 0.5,
       })
       break
     }
