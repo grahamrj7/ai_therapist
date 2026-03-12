@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { Trash2, Eye, X, Loader2, BarChart3, Brain } from "lucide-react"
+import { Trash2, Eye, X, Loader2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Memory, MemoryCategory } from "@/types/memory"
 import { loadMemories, deleteMemory } from "@/lib/db"
@@ -27,6 +27,7 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
   const [memories, setMemories] = useState<Memory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<MemoryCategory | "all">("all")
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     loadUserMemories()
@@ -44,9 +45,34 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
     loadUserMemories()
   }
 
-  const filteredMemories = filter === "all" 
-    ? memories 
-    : memories.filter(m => m.category === filter)
+  const filteredMemories = useMemo(() => {
+    let result = filter === "all" 
+      ? memories 
+      : memories.filter(m => m.category === filter)
+    
+    if (search.trim()) {
+      const searchLower = search.toLowerCase()
+      result = result.filter(m => m.content.toLowerCase().includes(searchLower))
+    }
+    
+    return result
+  }, [memories, filter, search])
+
+  // Helper to format memory age
+  function formatMemoryAge(dateStr: string) {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+    
+    if (diffMins < 1) return "just now"
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -90,6 +116,20 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
             </div>
           </div>
         )}
+
+        {/* Search */}
+        <div className="p-3 border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search memories..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta/50"
+            />
+          </div>
+        </div>
 
         {/* Filter tabs */}
         <div className="flex gap-2 p-3 border-b overflow-x-auto">
@@ -140,6 +180,8 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
                     <p className="text-sm mt-1.5">{memory.content}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                       <span>Importance: {memory.importance}/10</span>
+                      <span>•</span>
+                      <span>{formatMemoryAge(memory.created_at)}</span>
                     </div>
                   </div>
                   <Button
