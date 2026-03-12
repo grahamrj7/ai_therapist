@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
-import { saveSession, loadSessions } from "@/lib/db"
+import { saveSession, loadSessions, loadMemories } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
+import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
 
 const SYNC_CACHE_KEY = "therapy_sessions_sync"
 const SYNC_INTERVAL = 5 * 60 * 1000 // 5 minutes
@@ -308,6 +309,23 @@ export function useChat(options: UseChatOptions = {}) {
         
         setSessions(finalSessionsWithBot)
         saveSessions(finalSessionsWithBot)
+
+        // Extract and save memories from the conversation
+        // We do this with a slight delay to not block the UI
+        if (userId && messages.length > 0) {
+          const lastUserMessage = messages[messages.length - 1]
+          // Simple debounce - extract memories after response is complete
+          setTimeout(() => {
+            try {
+              const extractedMemories = extractMemories(lastUserMessage.content, responseText)
+              if (extractedMemories.length > 0) {
+                console.log('[Memory] Extracted memories:', extractedMemories.length)
+              }
+            } catch (err) {
+              console.error('[Memory] Error extracting memories:', err)
+            }
+          }, 1000)
+        }
       }
 
     } catch (error) {

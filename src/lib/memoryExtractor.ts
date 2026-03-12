@@ -62,8 +62,7 @@ const FAMILY_PATTERNS = [
   /my (?:mom|father|mother|dad|parent)(?:s)?/i,
   /i have (?:[\w\s]+ )?(?:kids?|children|son|daughter)/i,
   /my (?:son|daughter|child|kids?)/i,
-  /i have a (?:dog|cat|pet)/i (?:dog,
-  /my|cat|pet) (?:is|called)/i,
+  /i have a (?:dog|cat|pet)/i,
   /i'm (?:married|single|divorced|separated)/i,
   /i live with my/i,
 ]
