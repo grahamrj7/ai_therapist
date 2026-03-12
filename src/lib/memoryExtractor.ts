@@ -1,0 +1,349 @@
+/**
+ * Memory Extractor Service
+ * Analyzes conversations to extract memory-worthy information
+ * 
+ * This service processes user messages and AI responses to identify
+ * personal facts, topics, emotions, and preferences worth remembering.
+ */
+
+import type { MemoryCategory } from '@/types/memory'
+
+// ============================================================================
+// Extraction Patterns
+// ============================================================================
+
+// Personal facts patterns
+const NAME_PATTERNS = [
+  /my name is ([\w\s]+)/i,
+  /i'm ([\w\s]+)/i,
+  /i am ([\w\s]+)/i,
+  /call me ([\w\s]+)/i,
+]
+
+const LOCATION_PATTERNS = [
+  /i live in ([\w\s]+)/i,
+  /i'm from ([\w\s]+)/i,
+  /i stay in ([\w\s]+)/i,
+  /based in ([\w\s]+)/i,
+]
+
+const OCCUPATION_PATTERNS = [
+  /i work (?:as|as a|in)/i,
+  /i'm a ([\w\s]+)/i,
+  /i do ([\w\s]+) for a living/i,
+  /my job is/i,
+  /i'm (?:currently )?working as/i,
+]
+
+const FAMILY_PATTERNS = [
+  /my (?:husband|wife|partner|boyfriend|girlfriend|fiance)(?:'s)? name is/i,
+  /i have a (?:husband|wife|partner|boyfriend|girlfriend)/i,
+  /my (?:mom|father|mother|dad|parent)(?:s)?/i,
+  /i have (?:[\w\s]+ )?(?:kids?|children|son|daughter)/i,
+  /my (?:son|daughter|child|kids?)/i,
+  /i have a (?:dog|cat|pet)/i,
+]
+
+const HOBBY_PATTERNS = [
+  /i (?:like|love|enjoy|do)(?:ing)? (?:[\w\s]+ )?(?:in my )?(?:free |spare )?time/i,
+  /my hobby (?:is|are)/i,
+  /i (?:go|play|practice)(?:ing)? ([\w\s]+)/i,
+]
+
+// Emotion indicators
+const EMOTION_KEYWORDS = {
+  anxiety: ['anxious', 'worried', 'nervous', 'panic', 'overwhelmed', 'stressed', 'fear', 'scared'],
+  sadness: ['sad', 'depressed', 'down', 'hopeless', 'heartbroken', 'grief', 'lonely'],
+  anger: ['angry', 'frustrated', 'annoyed', 'irritated', 'furious', 'mad'],
+  happiness: ['happy', 'joy', 'excited', 'grateful', 'blessed', 'content', 'peaceful'],
+  fatigue: ['tired', 'exhausted', 'drained', 'burnout', 'fatigue', 'drowsy'],
+}
+
+// ============================================================================
+// Extraction Functions
+// ============================================================================
+
+export interface ExtractedFact {
+  content: string
+  category: MemoryCategory
+  importance: number
+  confidence: number
+}
+
+/**
+ * Extract personal facts from a message
+ * Looks for names, locations, occupations, family info, hobbies
+ */
+export function extractPersonalFacts(text: string): ExtractedFact[] {
+  const facts: ExtractedFact[] = []
+  const lowerText = text.toLowerCase()
+
+  // Check for name
+  for (const pattern of NAME_PATTERNS) {
+    const match = text.match(pattern)
+    if (match && match[1]) {
+      const name = match[1].trim()
+      // Make sure it's not a common phrase
+      if (name.length > 2 && !['a', 'an', 'the', 'not', 'very', 'really'].includes(name)) {
+        facts.push({
+          content: `User's name is ${name}`,
+          category: 'personal',
+          importance: 10,
+          confidence: 0.9,
+        })
+        break
+      }
+    }
+  }
+
+  // Check for location
+  for (const pattern of LOCATION_PATTERNS) {
+    const match = text.match(pattern)
+    if (match && match[1]) {
+      const location = match[1].trim()
+      if (location.length > 2) {
+        facts.push({
+          content: `User lives in ${location}`,
+          category: 'personal',
+          importance: 7,
+          confidence: 0.7,
+        })
+        break
+      }
+    }
+  }
+
+  // Check for occupation
+  for (const pattern of OCCUPATION_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) {
+      facts.push({
+        content: `User mentioned their work: "${match[0]}"`,
+        category: 'personal',
+        importance: 6,
+        confidence: 0.6,
+      })
+      break
+    }
+  }
+
+  // Check for family
+  for (const pattern of FAMILY_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) {
+      facts.push({
+        content: `User mentioned family: "${match[0]}"`,
+        category: 'personal',
+        importance: 8,
+        confidence: 0.7,
+      })
+      break
+    }
+  }
+
+  // Check for hobbies
+  for (const pattern of HOBBY_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) {
+      facts.push({
+        content: `User has hobby/interest: "${match[0]}"`,
+        category: 'personal',
+        importance: 5,
+        confidence: 0.5,
+      })
+      break
+    }
+  }
+
+  return facts
+}
+
+/**
+ * Extract emotional content from a message
+ * Identifies emotions and mood mentioned
+ */
+export function extractEmotions(text: string): ExtractedFact[] {
+  const emotions: ExtractedFact[] = []
+  const lowerText = text.toLowerCase()
+
+  for (const [emotion, keywords] of Object.entries(EMOTION_KEYWORDS)) {
+    const matchedKeywords = keywords.filter(kw => lowerText.includes(kw))
+    
+    if (matchedKeywords.length > 0) {
+      emotions.push({
+        content: `User expressed ${emotion}: ${matchedKeywords.join(', ')}`,
+        category: 'emotion',
+        importance: matchedKeywords.length > 1 ? 8 : 5,
+        confidence: matchedKeywords.length > 1 ? 0.8 : 0.5,
+      })
+    }
+  }
+
+  return emotions
+}
+
+/**
+ * Extract topics from conversation
+ * Identifies problems, goals, coping strategies
+ */
+export function extractTopics(userMessage: string, botResponse: string): ExtractedFact[] {
+  const topics: ExtractedFact[] = []
+
+  // Look for problem statements
+  const problemPatterns = [
+    /i'm (?:going through|dealing with|struggling with|having)/i,
+    /my (?:problem|issue|challenge) is/i,
+    /i can't/i,
+    /i have (?:a )?problem/i,
+  ]
+
+  for (const pattern of problemPatterns) {
+    if (pattern.test(userMessage)) {
+      topics.push({
+        content: `User is dealing with: "${userMessage.substring(0, 100)}"`,
+        category: 'topic',
+        importance: 7,
+        confidence: 0.7,
+      })
+      break
+    }
+  }
+
+  // Look for goals/aspirations
+  const goalPatterns = [
+    /i want to/i,
+    /i'm trying to/i,
+    /i hope to/i,
+    /my goal is/i,
+    /i'm working towards/i,
+  ]
+
+  for (const pattern of goalPatterns) {
+    if (pattern.test(userMessage)) {
+      topics.push({
+        content: `User's goal: "${userMessage.substring(0, 100)}"`,
+        category: 'topic',
+        importance: 6,
+        confidence: 0.6,
+      })
+      break
+    }
+  }
+
+  // Look for coping strategies that work
+  const copingPatterns = [
+    /that (?:helps|worked|works) (?:for me|well)/i,
+    /i find (?:that|it) (?:helps|works)/i,
+    /when i (?:do|try) (?:[\w\s]+) (?:it|i feel) (?:better|helps)/i,
+  ]
+
+  for (const pattern of copingPatterns) {
+    if (pattern.test(botResponse) || pattern.test(userMessage)) {
+      topics.push({
+        content: `Potential coping strategy mentioned`,
+        category: 'topic',
+        importance: 5,
+        confidence: 0.4,
+      })
+      break
+    }
+  }
+
+  return topics
+}
+
+/**
+ * Extract preferences from conversation
+ */
+export function extractPreferences(userMessage: string, botResponse: string): ExtractedFact[] {
+  const preferences: ExtractedFact[] = []
+  const lowerText = userMessage.toLowerCase()
+
+  // Communication preferences
+  if (lowerText.includes('i prefer') || lowerText.includes("i don't like")) {
+    preferences.push({
+      content: `User mentioned preference: "${userMessage.substring(0, 100)}"`,
+      category: 'preference',
+      importance: 5,
+      confidence: 0.6,
+    })
+  }
+
+  // Things to avoid
+  const avoidPatterns = [
+    /don't (?:want|like|bring up|talk about)/i,
+    /i'd rather not/i,
+    /please don't/i,
+  ]
+
+  for (const pattern of avoidPatterns) {
+    if (pattern.test(userMessage)) {
+      preferences.push({
+        content: `User has boundary: "${userMessage.substring(0, 100)}"`,
+        category: 'preference',
+        importance: 8,
+        confidence: 0.7,
+      })
+      break
+    }
+  }
+
+  return preferences
+}
+
+/**
+ * Main extraction function - combines all extractors
+ */
+export function extractMemories(
+  userMessage: string,
+  botResponse: string
+): ExtractedFact[] {
+  const allFacts: ExtractedFact[] = []
+
+  // Extract in order of importance
+  const personalFacts = extractPersonalFacts(userMessage)
+  const emotions = extractEmotions(userMessage + ' ' + botResponse)
+  const topics = extractTopics(userMessage, botResponse)
+  const preferences = extractPreferences(userMessage, botResponse)
+
+  allFacts.push(...personalFacts, ...emotions, ...topics, ...preferences)
+
+  // Sort by importance
+  allFacts.sort((a, b) => b.importance - a.importance)
+
+  // Remove duplicates (same content)
+  const seen = new Set<string>()
+  return allFacts.filter(fact => {
+    const key = fact.content.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+/**
+ * Calculate importance score for a memory
+ * Factors: specificity, repetition, emotional weight, recency
+ */
+export function calculateImportance(
+  fact: ExtractedFact,
+  existingMemories: string[]
+): number {
+  let score = fact.importance
+
+  // Check if this topic has been mentioned before
+  const isRepetition = existingMemories.some(
+    existing => existing.toLowerCase().includes(fact.content.toLowerCase().substring(0, 30))
+  )
+
+  if (isRepetition) {
+    // Repetition increases importance
+    score += 2
+  }
+
+  // Higher confidence = higher importance
+  score += Math.floor(fact.confidence * 2)
+
+  // Cap at 10
+  return Math.min(score, 10)
+}
