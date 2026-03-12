@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
+import type { Memory } from "@/types/memory"
 import { saveSession, loadSessions, loadMemories } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
@@ -85,6 +86,7 @@ export function useChat(options: UseChatOptions = {}) {
   const [isTyping, setIsTyping] = useState(false)
   const [interimText, setInterimText] = useState("")
   const [isFreshChat, setIsFreshChat] = useState(false)
+  const [loadedMemories, setLoadedMemories] = useState<Memory[]>([])
   const chatRef = useRef<ChatSession | null>(null)
   const genAIRef = useRef<GoogleGenerativeAI | null>(null)
 
@@ -133,6 +135,13 @@ export function useChat(options: UseChatOptions = {}) {
         setMessages([welcomeMessage])
       }
 
+      // Also load memories if user is logged in
+      if (userId) {
+        const memories = await loadMemories(userId, { limit: 20 })
+        setLoadedMemories(memories)
+        console.log('[Memory] Loaded', memories.length, 'memories')
+      }
+
       // Then sync with Supabase if user is logged in and enough time has passed
       if (userId) {
         const lastSync = localStorage.getItem(SYNC_CACHE_KEY)
@@ -155,6 +164,13 @@ export function useChat(options: UseChatOptions = {}) {
               setCurrentSessionId(supabaseSessions[0].id)
               setMessages(supabaseSessions[0].messages)
               initializeChat(supabaseSessions[0].messages)
+            }
+
+            // Load memories for context
+            if (userId) {
+              const memories = await loadMemories(userId, { limit: 20 })
+              setLoadedMemories(memories)
+              console.log('[Memory] Loaded', memories.length, 'memories for session')
             }
           } else {
             localStorage.setItem(SYNC_CACHE_KEY, now.toString())

@@ -59,7 +59,8 @@ export function EmotionScaleSliders({
 }: EmotionScaleSlidersProps) {
   const [emotions, setEmotions] = useState<EmotionScale[]>(() => {
     if (initialEmotions) return initialEmotions
-    return DEFAULT_EMOTIONS.map(e => ({ ...e, value: 50 }))
+    // Default to 5 out of 10 (middle of scale)
+    return DEFAULT_EMOTIONS.map(e => ({ ...e, value: 5 }))
   })
   const [hasChanges, setHasChanges] = useState(false)
 
@@ -146,7 +147,7 @@ export function EmotionScaleSliders({
                     </span>
                   </div>
                   <div className={cn("flex items-center", getTrendColor(emotion.value))}>
-                    <span className="text-sm font-semibold">{emotion.value}%</span>
+                    <span className="text-sm font-semibold">{emotion.value}/10</span>
                   </div>
                 </div>
 
@@ -154,20 +155,21 @@ export function EmotionScaleSliders({
                 <div className="relative">
                   <input
                     type="range"
-                    min="0"
-                    max="100"
+                    min="1"
+                    max="10"
+                    step="1"
                     value={emotion.value}
                     onChange={(e) => handleSliderChange(emotion.id, parseInt(e.target.value))}
                     className="w-full h-3 rounded-full appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, ${emotion.color}40 0%, ${emotion.color} ${emotion.value}%, ${emotion.color}20 ${emotion.value}%, ${emotion.color}20 100%)`,
+                      background: `linear-gradient(to right, ${emotion.color}40 0%, ${emotion.color} ${((emotion.value - 1) / 9) * 100}%, ${emotion.color}20 ${((emotion.value - 1) / 9) * 100}%, ${emotion.color}20 100%)`,
                     }}
                   />
                   {/* Custom thumb */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-md border-2 pointer-events-none transition-transform"
                     style={{
-                      left: `calc(${emotion.value}% - 10px)`,
+                      left: `calc(${((emotion.value - 1) / 9) * 100}% - 10px)`,
                       borderColor: emotion.color,
                     }}
                   />
