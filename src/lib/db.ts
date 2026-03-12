@@ -1,6 +1,7 @@
 import { supabase } from "./supabase"
 import type { Message, Session } from "@/types"
 import type { EmotionScale } from "@/components/activities/EmotionScaleSliders"
+import type { Memory, MemoryCategory } from "@/types/memory"
 
 export async function saveSession(userId: string, session: Session) {
   const { error } = await supabase
@@ -162,4 +163,175 @@ export async function loadEmotionCheckins(userId: string, sessionId?: string): P
   }
 
   return data || []
+}
+
+// ============================================================================
+// Memory Database Functions
+// ============================================================================
+
+export async function saveMemory(userId: string, memory: Omit<Memory, 'id' | 'createdAt' | 'lastReferencedAt' | 'isActive'>): Promise<Memory | null> {
+  const { data, error } = await supabase
+    .from("memories")
+    .insert({
+      user_id: userId,
+      content: memory.content,
+      category: memory.category,
+      importance: memory.importance,
+      source_message_id: memory.sourceMessageId || null,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error saving memory:", error)
+    return null
+  }
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    content: data.content,
+    category: data.category as MemoryCategory,
+    importance: data.importance,
+    sourceMessageId: data.source_message_id,
+    createdAt: data.created_at,
+    lastReferencedAt: data.last_referenced_at,
+    isActive: data.is_active,
+  }
+}
+
+export async function loadMemories(
+  userId: string,
+  options?: {
+    category?: MemoryCategory
+    limit?: number
+    minImportance?: number
+  }
+): Promise<Memory[]> {
+  let query = supabase
+    .from("memories")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+
+  if (options?.category) {
+    query = query.eq("category", options.category)
+  }
+
+  if (options?.minImportance) {
+    query = query.gte("importance", options.minImportance)
+  }
+
+  query = query
+    .order("importance", { ascending: false })
+    .order("last_referenced_at", { ascending: false, nullsFirst: true })
+    .order("created_at", { ascending: false })
+
+  if (options?.limit) {
+    query = query.limit(options.limit)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error loading memories:", error)
+    return []
+  }
+
+  return (data || []).map(m => ({
+    id: m.id,
+    userId: m.user_id,
+    content: m.content,
+    category: m.category as MemoryCategory,
+    importance: m.importance,
+    sourceMessageId: m.source_message_id,
+    createdAt: m.created_at,
+    lastReferencedAt: m.last_referenced_at,
+    isActive: m.is_active,
+  }))
+}
+
+export async function updateMemoryLastReferenced(memoryId: string): Promise<void> {
+  const { error } = await supabase
+    .from("memories")
+    .update({ last_referenced_at: Date.now() })
+    .eq("id", memoryId)
+
+  if (error) {
+    console.error("Error updating memory reference:", error)
+  }
+}
+
+export async function deleteMemory(memoryId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("memories")
+    .update({ is_active: false })
+    .eq("id", memoryId)
+
+  if (error) {
+    console.error("Error deleting memory:", error)
+    return false
+  }
+
+  return true
+}
+
+export async function getMemoryCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("memories")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_active", true)
+
+  if (error) {
+    console.error("Error getting memory count:", error)
+    return 0
+  }
+
+  return count || 0
+}
+
+export async function findSimilarMemory(userId: string, content: string, threshold: number = 0.8): Promise<Memory | null> {
+  const memories = await loadMemories(userId, { limit: 100 })
+  
+  // Simple similarity check - look for very similar content
+  const normalizedContent = content.toLowerCase().trim()
+  
+  for (const memory of memories) {
+    const normalizedMemory = memory.content.toLowerCase().trim()
+    
+    // Check for exact match or very close match
+    if (normalizedMemory === normalizedContent) {
+      return memory
+    }
+    
+    // Check if one contains the other (for longer memories)
+    if (normalizedMemory.length > 20 && normalizedContent.length > 20) {
+      if (normalizedMemory.includes(normalizedContent) || normalizedContent.includes(normalizedMemory)) {
+        return memory
+      }
+    }
+  }
+
+  return null
+}
+
+export async function removeLowestImportanceMemory(userId: string): Promise<boolean> {
+  // Get memories sorted by importance, exclude the most important ones
+  const { data, error } = await supabase
+    .from("memories")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .order("importance", { ascending: true })
+    .order("last_referenced_at", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .single()
+
+  if (error || !data) {
+    return false
+  }
+
+  return deleteMemory(data.id)
 }
