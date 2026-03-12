@@ -5,6 +5,7 @@ import type { Memory } from "@/types/memory"
 import { saveSession, loadSessions, loadMemories, getMemoryCount, removeLowestImportanceMemory, findSimilarMemory, saveMemory } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
+import { shouldAskLearningQuestion, getPersonalizationPrompt } from "@/lib/learningQuestions"
 
 const SYNC_CACHE_KEY = "therapy_sessions_sync"
 const SYNC_INTERVAL = 5 * 60 * 1000 // 5 minutes
@@ -335,6 +336,39 @@ export function useChat(options: UseChatOptions = {}) {
       const finalMessages = [...updatedMessages, botMessage]
       setMessages(finalMessages)
       setIsTyping(false)
+
+      // Check if we should ask a learning question
+      if (userId && loadedMemories.length > 0) {
+        const memoryStrings = loadedMemories.map(m => m.content)
+        const learningQuestion = shouldAskLearningQuestion(memoryStrings, messages.length)
+        
+        if (learningQuestion) {
+          // Wait a bit then ask the learning question
+          setTimeout(async () => {
+            try {
+              const personalization = getPersonalizationPrompt(memoryStrings)
+              const prompt = personalization 
+                ? `${personalization}\n\n${learningQuestion}`
+                : learningQuestion
+              
+              const result = await chatRef.current.sendMessage(prompt)
+              const response = await result.response
+              const questionText = response.text()
+
+              const learningMessage: Message = {
+                id: generateId(),
+                role: "bot",
+                content: questionText,
+                timestamp: Date.now(),
+              }
+
+              setMessages(prev => [...prev, learningMessage])
+            } catch (err) {
+              console.error('[Learning] Error asking question:', err)
+            }
+          }, 2000) // Wait 2 seconds after main response
+        }
+      }
 
       // Check if AI response suggests an activity - delay to let user read/message
       if (onActivityTriggered) {
