@@ -255,6 +255,7 @@ export function ChatApp() {
         onTTSEnabledChange={setTTSEnabled}
         voiceName={settings.voiceName}
         onVoiceChange={updateVoiceName}
+        userId={user?.uid}
       />
 
       <TTSPrompt

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"
-import { X, Trash2, AlertTriangle, User, Volume2, Mic, Info, Settings2, Database } from "lucide-react"
+import { X, Trash2, AlertTriangle, User, Volume2, Mic, Info, Settings2, Database, Brain } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MemoryViewer } from "@/components/settings/MemoryViewer"
 
 interface VoiceOption {
   name: string
@@ -20,6 +21,7 @@ interface SettingsDialogProps {
   onTTSEnabledChange: (enabled: boolean) => void
   voiceName?: string
   onVoiceChange?: (voiceName: string) => void
+  userId?: string
 }
 
 export function SettingsDialog({
@@ -32,11 +34,13 @@ export function SettingsDialog({
   onTTSEnabledChange,
   voiceName,
   onVoiceChange,
+  userId,
 }: SettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'data' | 'about'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'data' | 'memories' | 'about'>('general')
   const [showConfirm, setShowConfirm] = useState(false)
   const [nameInput, setNameInput] = useState(therapistName)
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([])
+  const [showMemoryViewer, setShowMemoryViewer] = useState(false)
   
   // Allowed voices - must be exact matches from this list only
   const allowedVoiceNames = [
@@ -269,6 +273,7 @@ export function SettingsDialog({
 
   const tabs = [
     { id: 'general' as const, label: 'General', icon: Settings2 },
+    { id: 'memories' as const, label: 'Memories', icon: Brain },
     { id: 'data' as const, label: 'Data', icon: Database },
     { id: 'about' as const, label: 'About', icon: Info },
   ]
@@ -444,6 +449,36 @@ export function SettingsDialog({
                 </div>
               )}
 
+              {/* Memories Tab */}
+              {activeTab === 'memories' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-text-primary">What the AI Knows About You</h3>
+                    <p className="text-sm text-text-muted">
+                      The AI therapist remembers information you share during conversations. You can view and manage these memories here.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => setShowMemoryViewer(true)}
+                    className="w-full"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    View My Memories
+                  </Button>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <h4 className="font-medium text-blue-800 text-sm mb-2">How it works</h4>
+                    <ul className="text-xs text-blue-700 space-y-1">
+                      <li>• The AI learns from your conversations</li>
+                      <li>• It stores personal facts, topics, emotions, and preferences</li>
+                      <li>• It occasionally asks questions to learn more about you</li>
+                      <li>• You can delete any memory at any time</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {/* Data Tab */}
               {activeTab === 'data' && (
                 <div className="space-y-6">
@@ -527,6 +562,11 @@ export function SettingsDialog({
             </div>
           </motion.div>
         </>
+      )}
+
+      {/* Memory Viewer Modal */}
+      {showMemoryViewer && userId && (
+        <MemoryViewer userId={userId} onClose={() => setShowMemoryViewer(false)} />
       )}
     </AnimatePresence>
   )
