@@ -19,9 +19,21 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9)
 }
 
-function getTherapistPrompt(userName?: string, therapistName: string = "Abby"): string {
+function getTherapistPrompt(
+  userName: string | undefined, 
+  therapistName: string = "Abby",
+  memories: string[] = []
+): string {
   const nameContext = userName
     ? `The client's name is ${userName}. Use their name occasionally and naturally in conversation.`
+    : ''
+
+  // Format memories for the prompt
+  const memoriesContext = memories.length > 0 
+    ? `MEMORIES ABOUT THE CLIENT (from previous sessions - use this to personalize your responses):
+${memories.map((m, i) => `${i + 1}. ${m}`).join('\n')}
+
+`
     : ''
 
   return `Your name is ${therapistName}. You are a compassionate and empathetic therapist.
@@ -29,7 +41,7 @@ function getTherapistPrompt(userName?: string, therapistName: string = "Abby"): 
 IMPORTANT: ${therapistName} is YOUR name (the therapist), NOT the client's name.
 
 ${nameContext}
-
+${memoriesContext}
 AVAILABLE THERAPEUTIC TOOLS:
 - Box Breathing Exercise: A guided 4-4-4-4 breathing technique (inhale 4 seconds, hold 4, exhale 4, hold 4). You can suggest this when:
   * The user expresses anxiety, stress, overwhelm, or panic
@@ -100,7 +112,7 @@ export function useChat(options: UseChatOptions = {}) {
   // Initialize or re-initialize chat when therapistName changes
   useEffect(() => {
     if (genAIRef.current) {
-      initializeChat(messages)
+      initializeChat(messages, loadedMemories)
     }
   }, [therapistName])
 
@@ -119,11 +131,11 @@ export function useChat(options: UseChatOptions = {}) {
         if (todaySession) {
           setCurrentSessionId(todaySession.id)
           setMessages(todaySession.messages)
-          initializeChat(todaySession.messages)
+          initializeChat(todaySession.messages, loadedMemories)
         } else if (sessionsArray.length > 0) {
           setCurrentSessionId(sessionsArray[0].id)
           setMessages(sessionsArray[0].messages)
-          initializeChat(sessionsArray[0].messages)
+          initializeChat(sessionsArray[0].messages, loadedMemories)
         }
       } else {
         const welcomeMessage: Message = {
@@ -159,11 +171,11 @@ export function useChat(options: UseChatOptions = {}) {
             if (todaySession) {
               setCurrentSessionId(todaySession.id)
               setMessages(todaySession.messages)
-              initializeChat(todaySession.messages)
+              initializeChat(todaySession.messages, loadedMemories)
             } else if (supabaseSessions.length > 0) {
               setCurrentSessionId(supabaseSessions[0].id)
               setMessages(supabaseSessions[0].messages)
-              initializeChat(supabaseSessions[0].messages)
+              initializeChat(supabaseSessions[0].messages, loadedMemories)
             }
 
             // Load memories for context
@@ -181,12 +193,15 @@ export function useChat(options: UseChatOptions = {}) {
     load()
   }, [userId])
 
-  const initializeChat = (history: Message[] = []) => {
+  const initializeChat = (history: Message[] = [], memories: Memory[] = []) => {
     if (!genAIRef.current) return
+
+    // Format memories for the prompt
+    const memoryStrings = memories.slice(0, 15).map(m => m.content)
 
     const model = genAIRef.current.getGenerativeModel({
       model: "gemini-2.5-flash",
-      systemInstruction: getTherapistPrompt(undefined, therapistName),
+      systemInstruction: getTherapistPrompt(undefined, therapistName, memoryStrings),
     })
 
     // Filter out the welcome message (first bot message when no user messages exist yet)
@@ -397,9 +412,9 @@ export function useChat(options: UseChatOptions = {}) {
     setCurrentSessionId(newSession.id)
     setMessages([welcomeMessage])
     setIsFreshChat(true)
-    initializeChat([welcomeMessage])
+    initializeChat([welcomeMessage], loadedMemories)
     saveSessions(updatedSessions)
-  }, [sessions, therapistName])
+  }, [sessions, therapistName, loadedMemories])
 
   const selectSession = useCallback((sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId)
@@ -407,9 +422,9 @@ export function useChat(options: UseChatOptions = {}) {
       setCurrentSessionId(sessionId)
       setMessages(session.messages)
       setIsFreshChat(false)
-      initializeChat(session.messages)
+      initializeChat(session.messages, loadedMemories)
     }
-  }, [sessions])
+  }, [sessions, loadedMemories])
 
   const triggerEmotionResponse = useCallback(async (emotions: { label: string; value: number }[]) => {
     const emotionSummary = emotions
