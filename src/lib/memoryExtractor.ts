@@ -403,34 +403,91 @@ export function extractTopics(userMessage: string, botResponse: string): Extract
 
 /**
  * Extract preferences from conversation
+ * Identifies communication preferences, boundaries, likes/dislikes
  */
 export function extractPreferences(userMessage: string, botResponse: string): ExtractedFact[] {
   const preferences: ExtractedFact[] = []
   const lowerText = userMessage.toLowerCase()
 
   // Communication preferences
-  if (lowerText.includes('i prefer') || lowerText.includes("i don't like")) {
-    preferences.push({
-      content: `User mentioned preference: "${userMessage.substring(0, 100)}"`,
-      category: 'preference',
-      importance: 5,
-      confidence: 0.6,
-    })
+  const communicationPrefs = [
+    /i prefer (?:to|when|i like)/i,
+    /i don't like (?:to|when|i hate)/i,
+    /i'm more comfortable with/i,
+    /i find it hard to/i,
+    /i'm not (?:really )?comfortable with/i,
+  ]
+
+  for (const pattern of communicationPrefs) {
+    if (pattern.test(userMessage)) {
+      preferences.push({
+        content: `User mentioned communication preference: "${userMessage.substring(0, 100)}"`,
+        category: 'preference',
+        importance: 6,
+        confidence: 0.7,
+      })
+      break
+    }
   }
 
-  // Things to avoid
+  // Things to avoid / boundaries
   const avoidPatterns = [
     /don't (?:want|like|bring up|talk about)/i,
     /i'd rather not/i,
     /please don't/i,
+    /i don't want to (?:talk about|discuss|bring up)/i,
+    /can we (?:not|avoid) (?:talking about|discussing)/i,
+    /i'd prefer not to/i,
   ]
 
   for (const pattern of avoidPatterns) {
     if (pattern.test(userMessage)) {
       preferences.push({
-        content: `User has boundary: "${userMessage.substring(0, 100)}"`,
+        content: `User set a boundary: "${userMessage.substring(0, 100)}"`,
         category: 'preference',
-        importance: 8,
+        importance: 9,
+        confidence: 0.8,
+      })
+      break
+    }
+  }
+
+  // Activity preferences - what user likes/dislikes
+  const activityPrefs = [
+    /i (?:like|love|enjoy) (?:[\w\s]+ )?activities/i,
+    /i (?:hate|dislike|don't like) (?:[\w\s]+ )?activities/i,
+    /i prefer (?:[\w\s]+ )?exercises/i,
+    /meditation (?:helps|doesn't work) (?:for me)?/i,
+    /breathing (?:exercises|work|helps) (?:for me)?/i,
+  ]
+
+  for (const pattern of activityPrefs) {
+    if (pattern.test(userMessage) || pattern.test(botResponse)) {
+      preferences.push({
+        content: `User shared activity preference`,
+        category: 'preference',
+        importance: 5,
+        confidence: 0.6,
+      })
+      break
+    }
+  }
+
+  // Therapeutic approach preferences
+  const therapyPrefs = [
+    /i respond well to/i,
+    /i don't respond well to/i,
+    /what works (?:best|well) for me/i,
+    /i find (?:that|it) (?:helpful|not helpful)/i,
+    /i prefer (?:one-on-one|group|written|verbal)/i,
+  ]
+
+  for (const pattern of therapyPrefs) {
+    if (pattern.test(userMessage)) {
+      preferences.push({
+        content: `User shared therapy approach preference: "${userMessage.substring(0, 100)}"`,
+        category: 'preference',
+        importance: 7,
         confidence: 0.7,
       })
       break
