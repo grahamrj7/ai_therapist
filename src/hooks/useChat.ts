@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { GoogleGenerativeAI, type ChatSession } from "@google/generative-ai"
 import type { Message, Session } from "@/types"
 import type { Memory } from "@/types/memory"
-import { saveSession, loadSessions, loadMemories } from "@/lib/db"
+import { saveSession, loadSessions, loadMemories, getMemoryCount, removeLowestImportanceMemory, findSimilarMemory, saveMemory } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
 
@@ -346,12 +346,38 @@ export function useChat(options: UseChatOptions = {}) {
         if (userId && messages.length > 0) {
           const lastUserMessage = messages[messages.length - 1]
           // Simple debounce - extract memories after response is complete
-          setTimeout(() => {
+          setTimeout(async () => {
             try {
               const extractedMemories = extractMemories(lastUserMessage.content, responseText)
-              if (extractedMemories.length > 0) {
-                console.log('[Memory] Extracted memories:', extractedMemories.length)
+              
+              for (const fact of extractedMemories) {
+                // Check for duplicate first
+                const existing = await findSimilarMemory(userId, fact.content)
+                if (existing) {
+                  console.log('[Memory] Similar memory exists, skipping:', fact.content.substring(50))
+                  continue
+                }
+                
+                // Check memory count and enforce cap
+                const count = await getMemoryCount(userId)
+                if (count >= 100) {
+                  await removeLowestImportanceMemory(userId)
+                }
+                
+                // Save the memory
+                await saveMemory(userId, {
+                  userId,
+                  content: fact.content,
+                  category: fact.category,
+                  importance: fact.importance,
+                })
+                console.log('[Memory] Saved:', fact.content.substring(50))
               }
+              
+              // Reload memories for future sessions
+              const updatedMemories = await loadMemories(userId, { limit: 20 })
+              setLoadedMemories(updatedMemories)
+              
             } catch (err) {
               console.error('[Memory] Error extracting memories:', err)
             }
