@@ -89,13 +89,13 @@ export function shouldAskLearningQuestion(
   existingMemories: string[],
   messageCount: number
 ): string | null {
-  // Only ask after at least 3 messages in the conversation
-  if (messageCount < 3) {
+  // Ask after at least 1 message
+  if (messageCount < 1) {
     return null
   }
 
-  // Only ask with 20% probability to not overwhelm the user
-  if (Math.random() > 0.2) {
+  // Only ask with 15% probability to not overwhelm the user
+  if (Math.random() > 0.15) {
     return null
   }
 
@@ -104,6 +104,63 @@ export function shouldAskLearningQuestion(
     if (!goal.alreadyAsked(existingMemories)) {
       return goal.question
     }
+  }
+
+  return null
+}
+
+/**
+ * Generate a follow-up prompt that references past memories
+ * E.g., "Last time you mentioned feeling anxious, how is that going?"
+ */
+export function generateMemoryFollowUp(existingMemories: string[]): string | null {
+  if (existingMemories.length === 0) {
+    return null
+  }
+
+  const followUps: string[] = []
+
+  // Check for emotion memories
+  const emotionMemories = existingMemories.filter(m => 
+    m.toLowerCase().includes('expressed') && 
+    (m.toLowerCase().includes('anxiety') || 
+     m.toLowerCase().includes('stress') || 
+     m.toLowerCase().includes('sad') ||
+     m.toLowerCase().includes('angry') ||
+     m.toLowerCase().includes('tired'))
+  )
+
+  if (emotionMemories.length > 0) {
+    const randomEmotion = emotionMemories[Math.floor(Math.random() * emotionMemories.length)]
+    followUps.push(`You mentioned "${randomEmotion.substring(0, 60)}..." - how are you feeling about that now?`)
+  }
+
+  // Check for topic memories
+  const topicMemories = existingMemories.filter(m => 
+    m.toLowerCase().includes('dealing with') ||
+    m.toLowerCase().includes('goal') ||
+    m.toLowerCase().includes('problem')
+  )
+
+  if (topicMemories.length > 0) {
+    const randomTopic = topicMemories[Math.floor(Math.random() * topicMemories.length)]
+    followUps.push(`Earlier you shared "${randomTopic.substring(0, 50)}..." - has anything changed since then?`)
+  }
+
+  // Check for personal facts
+  const personalMemories = existingMemories.filter(m => 
+    m.toLowerCase().includes("name is") ||
+    m.toLowerCase().includes("work") ||
+    m.toLowerCase().includes("hobby")
+  )
+
+  if (personalMemories.length > 0) {
+    followUps.push("I'd love to hear more about what you shared before. How are things on that front?")
+  }
+
+  // Return a random follow-up with 20% probability
+  if (followUps.length > 0 && Math.random() < 0.2) {
+    return followUps[Math.floor(Math.random() * followUps.length)]
   }
 
   return null

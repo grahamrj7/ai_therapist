@@ -5,7 +5,7 @@ import type { Memory } from "@/types/memory"
 import { saveSession, loadSessions, loadMemories, getMemoryCount, removeLowestImportanceMemory, findSimilarMemory, saveMemory } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
-import { shouldAskLearningQuestion, getPersonalizationPrompt } from "@/lib/learningQuestions"
+import { shouldAskLearningQuestion, getPersonalizationPrompt, generateMemoryFollowUp } from "@/lib/learningQuestions"
 
 const SYNC_CACHE_KEY = "therapy_sessions_sync"
 const SYNC_INTERVAL = 5 * 60 * 1000 // 5 minutes
@@ -337,19 +337,25 @@ export function useChat(options: UseChatOptions = {}) {
       setMessages(finalMessages)
       setIsTyping(false)
 
-      // Check if we should ask a learning question
+      // Check if we should ask a learning question or follow up on past memories
       if (userId && loadedMemories.length > 0) {
         const memoryStrings = loadedMemories.map(m => m.content)
-        const learningQuestion = shouldAskLearningQuestion(memoryStrings, messages.length)
         
-        if (learningQuestion) {
-          // Wait a bit then ask the learning question
+        // Either ask a learning question OR follow up on past memories
+        const learningQuestion = shouldAskLearningQuestion(memoryStrings, messages.length)
+        const followUpQuestion = generateMemoryFollowUp(memoryStrings)
+        
+        // Prefer follow-up questions, fall back to learning questions
+        const selectedQuestion = followUpQuestion || learningQuestion
+        
+        if (selectedQuestion) {
+          // Wait a bit then ask the question
           setTimeout(async () => {
             try {
               const personalization = getPersonalizationPrompt(memoryStrings)
               const prompt = personalization 
-                ? `${personalization}\n\n${learningQuestion}`
-                : learningQuestion
+                ? `${personalization}\n\n${selectedQuestion}`
+                : selectedQuestion
               
               const result = await chatRef.current.sendMessage(prompt)
               const response = await result.response
