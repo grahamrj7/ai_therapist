@@ -19,6 +19,32 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9)
 }
 
+/**
+ * Generate a personalized welcome message based on existing memories
+ */
+function generateWelcomeMessage(therapistName: string, memories: string[]): string {
+  // Check if we know the user's name
+  const nameMemory = memories.find(m => m.toLowerCase().includes("user's name is"))
+  
+  if (nameMemory) {
+    // Extract name from memory
+    const nameMatch = nameMemory.match(/name is (.+)/i)
+    const userName = nameMatch ? nameMatch[1].trim() : null
+    
+    if (userName) {
+      return `Welcome back ${userName}! It's good to see you again. How have you been since our last session?`
+    }
+  }
+  
+  // Check if returning user (has any memories)
+  if (memories.length > 0) {
+    return `Welcome back! It's good to see you again. I've been looking forward to our session. How are you feeling today?`
+  }
+  
+  // First time user
+  return `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`
+}
+
 function getTherapistPrompt(
   userName: string | undefined, 
   therapistName: string = "Abby",
@@ -418,10 +444,14 @@ export function useChat(options: UseChatOptions = {}) {
   }, [messages, sessions, currentSessionId, isFreshChat, saveSessions])
 
   const createNewSession = useCallback(() => {
+    // Generate personalized welcome if we have memories
+    const memoryStrings = loadedMemories.map(m => m.content)
+    const welcomeContent = generateWelcomeMessage(therapistName, memoryStrings)
+    
     const welcomeMessage: Message = {
       id: generateId(),
       role: "bot",
-      content: `Hi there! I'm ${therapistName}, and I'm here to support you. This is a safe space where you can share whatever's on your mind. How are you feeling today?`,
+      content: welcomeContent,
       timestamp: Date.now(),
     }
 
