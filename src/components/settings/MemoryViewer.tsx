@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Trash2, Eye, X, Loader2 } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Trash2, Eye, X, Loader2, BarChart3, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Memory, MemoryCategory } from "@/types/memory"
 import { loadMemories, deleteMemory } from "@/lib/db"
@@ -48,6 +48,20 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
     ? memories 
     : memories.filter(m => m.category === filter)
 
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const categoryCount = {
+      personal: memories.filter(m => m.category === 'personal').length,
+      topic: memories.filter(m => m.category === 'topic').length,
+      emotion: memories.filter(m => m.category === 'emotion').length,
+      preference: memories.filter(m => m.category === 'preference').length,
+    }
+    const avgImportance = memories.length > 0
+      ? Math.round(memories.reduce((acc, m) => acc + m.importance, 0) / memories.length)
+      : 0
+    return { categoryCount, avgImportance }
+  }, [memories])
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
@@ -61,6 +75,21 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
             <X className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* Stats */}
+        {memories.length > 0 && (
+          <div className="p-3 border-b bg-gray-50">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-3">
+                <span className="text-blue-600">{stats.categoryCount.personal} personal</span>
+                <span className="text-purple-600">{stats.categoryCount.topic} topics</span>
+                <span className="text-red-600">{stats.categoryCount.emotion} emotions</span>
+                <span className="text-green-600">{stats.categoryCount.preference} prefs</span>
+              </div>
+              <span className="text-gray-500">Avg importance: {stats.avgImportance}/10</span>
+            </div>
+          </div>
+        )}
 
         {/* Filter tabs */}
         <div className="flex gap-2 p-3 border-b overflow-x-auto">
