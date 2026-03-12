@@ -5,7 +5,6 @@
 
 import type { MemoryCategory } from '@/types/memory'
 
-// What we want to learn about
 interface LearningGoal {
   category: MemoryCategory
   question: string
@@ -13,7 +12,7 @@ interface LearningGoal {
   alreadyAsked: (existingMemories: string[]) => boolean
 }
 
-// Questions to ask when we don't have certain information
+// Comprehensive questions to ask when we don't have certain information
 const LEARNING_GOALS: LearningGoal[] = [
   {
     category: 'personal',
@@ -65,10 +64,40 @@ const LEARNING_GOALS: LearningGoal[] = [
     )
   },
   {
+    category: 'personal',
+    question: "How old are you? I ask just so I can better understand your perspective.",
+    keywords: ['age', 'old', 'young'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('years old') || 
+      m.toLowerCase().includes('age')
+    )
+  },
+  {
+    category: 'personal',
+    question: "Are you currently in school or working? What's your daily routine like?",
+    keywords: ['school', 'college', 'university', 'student'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('school') || 
+      m.toLowerCase().includes('student')
+    )
+  },
+  {
     category: 'emotion',
     question: "You mentioned feeling [emotion]. How long have you been feeling this way?",
     keywords: ['anxious', 'stressed', 'sad', 'overwhelmed'],
-    alreadyAsked: (memories) => false // Always okay to ask about current emotions
+    alreadyAsked: () => false
+  },
+  {
+    category: 'emotion',
+    question: "What do you think is contributing to how you're feeling?",
+    keywords: ['cause', 'reason', 'why'],
+    alreadyAsked: () => false
+  },
+  {
+    category: 'emotion',
+    question: "How has this been affecting your daily life?",
+    keywords: ['impact', 'affect', 'daily'],
+    alreadyAsked: () => false
   },
   {
     category: 'preference',
@@ -78,6 +107,36 @@ const LEARNING_GOALS: LearningGoal[] = [
       m.toLowerCase().includes('coping') || 
       m.toLowerCase().includes('helps')
     )
+  },
+  {
+    category: 'preference',
+    question: "What have you tried before to deal with this?",
+    keywords: ['tried', 'help', 'coping'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('tried')
+    )
+  },
+  {
+    category: 'preference',
+    question: "Do you prefer talking through problems or having some quiet time to think?",
+    keywords: ['prefer', 'quiet', 'think'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('prefer')
+    )
+  },
+  {
+    category: 'topic',
+    question: "Is there anything specific you'd like to work on in our sessions?",
+    keywords: ['work on', 'focus', 'goal'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('goal')
+    )
+  },
+  {
+    category: 'topic',
+    question: "What do you hope to get out of therapy?",
+    keywords: ['hope', 'want', 'goal'],
+    alreadyAsked: () => false
   },
 ]
 
@@ -110,8 +169,31 @@ export function shouldAskLearningQuestion(
 }
 
 /**
+ * Check if we should personalize based on what we know
+ */
+export function getPersonalizationPrompt(existingMemories: string[]): string {
+  const personalFacts = existingMemories.filter(m => 
+    m.toLowerCase().includes("name") ||
+    m.toLowerCase().includes("work") ||
+    m.toLowerCase().includes("live") ||
+    m.toLowerCase().includes("family") ||
+    m.toLowerCase().includes("pet")
+  )
+
+  if (personalFacts.length === 0) {
+    return ""
+  }
+
+  // Occasionally remind the AI what it knows
+  if (Math.random() > 0.7) {
+    return `You already know these things about the client: ${personalFacts.join('. ')}`
+  }
+
+  return ""
+}
+
+/**
  * Generate a follow-up prompt that references past memories
- * E.g., "Last time you mentioned feeling anxious, how is that going?"
  */
 export function generateMemoryFollowUp(existingMemories: string[]): string | null {
   if (existingMemories.length === 0) {
@@ -164,28 +246,4 @@ export function generateMemoryFollowUp(existingMemories: string[]): string | nul
   }
 
   return null
-}
-
-/**
- * Check if we should personalize based on what we know
- */
-export function getPersonalizationPrompt(existingMemories: string[]): string {
-  const personalFacts = existingMemories.filter(m => 
-    m.toLowerCase().includes("name") ||
-    m.toLowerCase().includes("work") ||
-    m.toLowerCase().includes("live") ||
-    m.toLowerCase().includes("family") ||
-    m.toLowerCase().includes("pet")
-  )
-
-  if (personalFacts.length === 0) {
-    return ""
-  }
-
-  // Occasionally remind the AI what it knows
-  if (Math.random() > 0.7) {
-    return `You already know these things about the client: ${personalFacts.join('. ')}`
-  }
-
-  return ""
 }
