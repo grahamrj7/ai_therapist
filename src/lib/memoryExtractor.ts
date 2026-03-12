@@ -18,6 +18,15 @@ const NAME_PATTERNS = [
   /i'm ([\w\s]+)/i,
   /i am ([\w\s]+)/i,
   /call me ([\w\s]+)/i,
+  /this is ([\w\s]+)/i,
+  /my name's ([\w\s]+)/i,
+]
+
+const AGE_PATTERNS = [
+  /i'm (?:about |approximately )?(\d{1,2})(?: years old)?/i,
+  /i am (?:about |approximately )?(\d{1,2})/i,
+  /age (\d{1,2})/i,
+  /(\d{1,2}) years? old/i,
 ]
 
 const LOCATION_PATTERNS = [
@@ -25,6 +34,8 @@ const LOCATION_PATTERNS = [
   /i'm from ([\w\s]+)/i,
   /i stay in ([\w\s]+)/i,
   /based in ([\w\s]+)/i,
+  /located in ([\w\s]+)/i,
+  /i reside in ([\w\s]+)/i,
 ]
 
 const OCCUPATION_PATTERNS = [
@@ -32,7 +43,17 @@ const OCCUPATION_PATTERNS = [
   /i'm a ([\w\s]+)/i,
   /i do ([\w\s]+) for a living/i,
   /my job is/i,
-  /i'm (?:currently )?working as/i,
+  /i'm (?:currently )?working (?:as|in)/i,
+  /i'm employed (?:as|in)/i,
+  /my profession is/i,
+]
+
+const EDUCATION_PATTERNS = [
+  /i (?:study|studied|am studying)/i,
+  /i'm a (?:student|graduate)/i,
+  /i have a (?:bachelor|master|phd|degree)/i,
+  /i graduated from/i,
+  /my major is/i,
 ]
 
 const FAMILY_PATTERNS = [
@@ -41,13 +62,26 @@ const FAMILY_PATTERNS = [
   /my (?:mom|father|mother|dad|parent)(?:s)?/i,
   /i have (?:[\w\s]+ )?(?:kids?|children|son|daughter)/i,
   /my (?:son|daughter|child|kids?)/i,
-  /i have a (?:dog|cat|pet)/i,
+  /i have a (?:dog|cat|pet)/i (?:dog,
+  /my|cat|pet) (?:is|called)/i,
+  /i'm (?:married|single|divorced|separated)/i,
+  /i live with my/i,
 ]
 
 const HOBBY_PATTERNS = [
   /i (?:like|love|enjoy|do)(?:ing)? (?:[\w\s]+ )?(?:in my )?(?:free |spare )?time/i,
   /my hobby (?:is|are)/i,
   /i (?:go|play|practice)(?:ing)? ([\w\s]+)/i,
+  /i like to ([\w\s]+)/i,
+  /in my free time i ([\w\s]+)/i,
+]
+
+const HEALTH_PATTERNS = [
+  /i have (?:been diagnosed with|diagnosed with)/i,
+  /i suffer from/i,
+  /my doctor (?:said|told me|diagnosed)/i,
+  /i'm on medication for/i,
+  /i have (?:diabetes|anxiety|depression|adhd|bipolar|ocd)/i,
 ]
 
 // Emotion indicators
@@ -150,6 +184,52 @@ export function extractPersonalFacts(text: string): ExtractedFact[] {
         category: 'personal',
         importance: 5,
         confidence: 0.5,
+      })
+      break
+    }
+  }
+
+  // Check for age
+  for (const pattern of AGE_PATTERNS) {
+    const match = text.match(pattern)
+    if (match && match[1]) {
+      const age = match[1]
+      const ageNum = parseInt(age)
+      if (ageNum >= 13 && ageNum <= 100) {
+        facts.push({
+          content: `User is ${ageNum} years old`,
+          category: 'personal',
+          importance: 6,
+          confidence: 0.8,
+        })
+        break
+      }
+    }
+  }
+
+  // Check for education
+  for (const pattern of EDUCATION_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) {
+      facts.push({
+        content: `User mentioned education: "${match[0]}"`,
+        category: 'personal',
+        importance: 5,
+        confidence: 0.6,
+      })
+      break
+    }
+  }
+
+  // Check for health
+  for (const pattern of HEALTH_PATTERNS) {
+    const match = text.match(pattern)
+    if (match) {
+      facts.push({
+        content: `User mentioned health condition: "${match[0]}"`,
+        category: 'personal',
+        importance: 9,
+        confidence: 0.8,
       })
       break
     }
