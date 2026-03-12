@@ -138,6 +138,78 @@ const LEARNING_GOALS: LearningGoal[] = [
     keywords: ['hope', 'want', 'goal'],
     alreadyAsked: () => false
   },
+  {
+    category: 'personal',
+    question: "What's been on your mind lately?",
+    keywords: ['mind', 'worry', 'think'],
+    alreadyAsked: () => false
+  },
+  {
+    category: 'personal',
+    question: "How would you describe your living situation?",
+    keywords: ['live', 'apartment', 'house', 'roommate'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('live') || 
+      m.toLowerCase().includes('apartment')
+    )
+  },
+  {
+    category: 'preference',
+    question: "What does a typical day look like for you?",
+    keywords: ['day', 'routine', 'typical'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('day') || 
+      m.toLowerCase().includes('routine')
+    )
+  },
+  {
+    category: 'personal',
+    question: "Are you more of an introvert or extrovert?",
+    keywords: ['introvert', 'extrovert', 'social'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('introvert') || 
+      m.toLowerCase().includes('extrovert')
+    )
+  },
+  {
+    category: 'topic',
+    question: "Is there a relationship you'd like to work on?",
+    keywords: ['relationship', 'friend', 'family', 'parent'],
+    alreadyAsked: () => false
+  },
+  {
+    category: 'emotion',
+    question: "How do you usually cope with difficult emotions?",
+    keywords: ['cope', 'deal', 'handle'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('cope') || 
+      m.toLowerCase().includes('deal')
+    )
+  },
+  {
+    category: 'preference',
+    question: "Do you prefer concrete advice or just someone to listen?",
+    keywords: ['advice', 'listen', 'talk'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('advice') || 
+      m.toLowerCase().includes('listen')
+    )
+  },
+  {
+    category: 'personal',
+    question: "What's one thing that always makes you smile?",
+    keywords: ['smile', 'happy', 'laugh'],
+    alreadyAsked: () => false
+  },
+  {
+    category: 'personal',
+    question: "Are you a morning person or night owl?",
+    keywords: ['morning', 'night', 'early', 'sleep'],
+    alreadyAsked: (memories) => memories.some(m => 
+      m.toLowerCase().includes('morning') || 
+      m.toLowerCase().includes('night')
+    )
+  },
 ]
 
 /**
