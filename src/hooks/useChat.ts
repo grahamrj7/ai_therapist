@@ -409,12 +409,27 @@ export function useChat(options: UseChatOptions = {}) {
 
         // Extract and save memories from the conversation
         // We do this with a slight delay to not block the UI
-        if (userId && messages.length > 0) {
-          const lastUserMessage = messages[messages.length - 1]
+        if (userId && finalMessages.length > 0) {
+          const lastUserMessage = finalMessages[finalMessages.length - 2] // Second to last is user message
           // Simple debounce - extract memories after response is complete
           setTimeout(async () => {
             try {
-              const extractedMemories = extractMemories(lastUserMessage.content, responseText)
+              // Need to get the actual user message from finalMessages since closure messages is stale
+              const userMsg = finalMessages.filter(m => m.role === 'user').pop()
+              const botMsg = finalMessages.filter(m => m.role === 'bot').pop()
+              
+              if (!userMsg) {
+                console.log('[Memory] No user message found')
+                return
+              }
+              
+              const extractedMemories = extractMemories(userMsg.content, botMsg?.content || '')
+              
+              console.log('[Memory] Extracted', extractedMemories.length, 'memories from:', userMsg.content.substring(0, 50))
+              
+              if (extractedMemories.length === 0) {
+                console.log('[Memory] No memories extracted from user message')
+              }
               
               for (const fact of extractedMemories) {
                 // Check for duplicate first
