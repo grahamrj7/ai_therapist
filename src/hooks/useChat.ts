@@ -115,10 +115,11 @@ interface UseChatOptions {
   therapistName?: string
   userId?: string
   onActivityTriggered?: (activity: 'breathing' | 'emotions') => void
+  onMemorySaved?: (messageId: string) => void
 }
 
 export function useChat(options: UseChatOptions = {}) {
-  const { therapistName = "Abby", userId, onActivityTriggered } = options
+  const { therapistName = "Abby", userId, onActivityTriggered, onMemorySaved } = options
   const [sessions, setSessions] = useState<Session[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string>("")
   const [messages, setMessages] = useState<Message[]>([])
@@ -322,6 +323,8 @@ export function useChat(options: UseChatOptions = {}) {
     }
 
     try {
+      const messageId = userMessage.id
+
       // Extract memories from user message BEFORE sending (on every message)
       if (userId && content.trim()) {
         setTimeout(async () => {
@@ -348,6 +351,7 @@ export function useChat(options: UseChatOptions = {}) {
             if (extractedMemories.length > 0) {
               const updated = await loadMemories(userId, { limit: 20 })
               setLoadedMemories(updated)
+              onMemorySaved?.(messageId)
             }
           } catch (err) {
             console.error('[Memory] Error extracting from message:', err)

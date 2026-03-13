@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageBubble } from "./MessageBubble"
 import { TypingIndicator } from "./TypingIndicator"
@@ -10,9 +10,10 @@ interface MessagesListProps {
   isFreshChat?: boolean
   therapistName?: string
   onTriggerBreathing?: () => void
+  memoriesSavedForMessages?: Set<string>
 }
 
-export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby", onTriggerBreathing }: MessagesListProps) {
+export function MessagesList({ messages, isTyping, isFreshChat, therapistName = "Abby", onTriggerBreathing, memoriesSavedForMessages = new Set() }: MessagesListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const prevMessagesLengthRef = useRef(messages.length)
 
@@ -36,7 +37,12 @@ export function MessagesList({ messages, isTyping, isFreshChat, therapistName = 
     >
       <AnimatePresence mode="popLayout">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} onTriggerBreathing={onTriggerBreathing} />
+          <MessageBubble 
+            key={message.id} 
+            message={message} 
+            onTriggerBreathing={onTriggerBreathing}
+            hasMemorySaved={memoriesSavedForMessages.has(message.id)}
+          />
         ))}
         
         {isTyping && <TypingIndicator />}

@@ -23,6 +23,7 @@ export function ChatApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showTTSPrompt, setShowTTSPrompt] = useState(false)
   const [activeActivity, setActiveActivity] = useState<string | null>(null)
+  const [memoriesSavedForMessages, setMemoriesSavedForMessages] = useState<Set<string>>(new Set())
 
   const {
     sessions,
@@ -38,7 +39,14 @@ export function ChatApp() {
     selectSession,
     setInterimText,
     triggerEmotionResponse,
-  } = useChat({ therapistName: settings.therapistName, userId: user?.uid, onActivityTriggered: setActiveActivity })
+  } = useChat({ 
+    therapistName: settings.therapistName, 
+    userId: user?.uid, 
+    onActivityTriggered: setActiveActivity,
+    onMemorySaved: (messageId) => {
+      setMemoriesSavedForMessages(prev => new Set([...prev, messageId]))
+    }
+  })
   
   const spokenMessageIds = useRef<Set<string>>(new Set())
 
@@ -230,6 +238,7 @@ export function ChatApp() {
                 isFreshChat={isFreshChat} 
                 therapistName={settings.therapistName}
                 onTriggerBreathing={handleTriggerBreathing}
+                memoriesSavedForMessages={memoriesSavedForMessages}
               />
               <InputArea
                 onSendMessage={handleSendMessage}

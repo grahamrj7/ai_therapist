@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Wind } from "lucide-react"
+import { Wind, Sparkles } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -8,6 +8,7 @@ import type { Message } from "@/types"
 interface MessageBubbleProps {
   message: Message
   onTriggerBreathing?: () => void
+  hasMemorySaved?: boolean
 }
 
 // Keywords that indicate the bot is suggesting the breathing exercise
@@ -26,7 +27,7 @@ function suggestsBreathing(content: string): boolean {
   return BREATHING_KEYWORDS.some(keyword => lowerContent.includes(keyword))
 }
 
-export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProps) {
+export function MessageBubble({ message, onTriggerBreathing, hasMemorySaved }: MessageBubbleProps) {
   const isUser = message.role === "user"
   const showBreathingButton = !isUser && onTriggerBreathing && suggestsBreathing(message.content)
 
@@ -73,6 +74,19 @@ export function MessageBubble({ message, onTriggerBreathing }: MessageBubbleProp
             <span className="hidden sm:inline">Start Breathing Exercise</span>
             <span className="sm:hidden">Breathe</span>
           </motion.button>
+        )}
+
+        {/* Memory Saved Indicator */}
+        {hasMemorySaved && isUser && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex items-center gap-1 text-[10px] text-terracotta/60"
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>remembered</span>
+          </motion.div>
         )}
       </div>
     </motion.div>
