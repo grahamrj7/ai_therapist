@@ -5,7 +5,7 @@ import type { Memory } from "@/types/memory"
 import { saveSession, loadSessions, loadMemories, getMemoryCount, removeLowestImportanceMemory, findSimilarMemory, saveMemory } from "@/lib/db"
 import { ACTIVITY_KEYWORDS } from "@/constants/activities"
 import { extractMemories, calculateImportance } from "@/lib/memoryExtractor"
-import { shouldAskLearningQuestion, getPersonalizationPrompt, generateMemoryFollowUp } from "@/lib/learningQuestions"
+import { shouldAskLearningQuestion, getPersonalizationPrompt, generateMemoryFollowUp, getContextualMemoryPrompt } from "@/lib/learningQuestions"
 
 const SYNC_CACHE_KEY = "therapy_sessions_sync"
 const SYNC_INTERVAL = 5 * 60 * 1000 // 5 minutes
@@ -322,7 +322,49 @@ export function useChat(options: UseChatOptions = {}) {
     }
 
     try {
-      const result = await chatRef.current.sendMessage(content)
+      // Extract memories from user message BEFORE sending (on every message)
+      if (userId && content.trim()) {
+        setTimeout(async () => {
+          try {
+            const extractedMemories = extractMemories(content, '')
+            
+            for (const fact of extractedMemories) {
+              const existing = await findSimilarMemory(userId, fact.content)
+              if (existing) continue
+              
+              const count = await getMemoryCount(userId)
+              if (count >= 100) {
+                await removeLowestImportanceMemory(userId)
+              }
+              
+              await saveMemory(userId, {
+                userId,
+                content: fact.content,
+                category: fact.category,
+                importance: fact.importance,
+              })
+            }
+            
+            if (extractedMemories.length > 0) {
+              const updated = await loadMemories(userId, { limit: 20 })
+              setLoadedMemories(updated)
+            }
+          } catch (err) {
+            console.error('[Memory] Error extracting from message:', err)
+          }
+        }, 100)
+      }
+
+      // Get contextual memories for this message
+      const memoryStrings = loadedMemories.map(m => m.content)
+      const contextualPrompt = getContextualMemoryPrompt(memoryStrings, content)
+      
+      // Send message with contextual memory if relevant
+      const messageToSend = contextualPrompt 
+        ? `${contextualPrompt}\n\nUser's message: ${content}`
+        : content
+
+      const result = await chatRef.current.sendMessage(messageToSend)
       const response = await result.response
       const responseText = response.text()
 
@@ -341,8 +383,9 @@ export function useChat(options: UseChatOptions = {}) {
       if (userId && loadedMemories.length > 0) {
         const memoryStrings = loadedMemories.map(m => m.content)
         
-        // Either ask a learning question OR follow up on past memories
-        const learningQuestion = shouldAskLearningQuestion(memoryStrings, messages.length)
+        // Use updatedMessages.length for accurate count
+        const userMessageCount = updatedMessages.filter(m => m.role === 'user').length
+        const learningQuestion = shouldAskLearningQuestion(memoryStrings, userMessageCount)
         const followUpQuestion = generateMemoryFollowUp(memoryStrings)
         
         // Prefer follow-up questions, fall back to learning questions
@@ -407,63 +450,9 @@ export function useChat(options: UseChatOptions = {}) {
         setSessions(finalSessionsWithBot)
         saveSessions(finalSessionsWithBot)
 
-        // Extract and save memories from the conversation
-        // We do this with a slight delay to not block the UI
-        if (userId && finalMessages.length > 0) {
-          const lastUserMessage = finalMessages[finalMessages.length - 2] // Second to last is user message
-          // Simple debounce - extract memories after response is complete
-          setTimeout(async () => {
-            try {
-              // Need to get the actual user message from finalMessages since closure messages is stale
-              const userMsg = finalMessages.filter(m => m.role === 'user').pop()
-              const botMsg = finalMessages.filter(m => m.role === 'bot').pop()
-              
-              if (!userMsg) {
-                console.log('[Memory] No user message found')
-                return
-              }
-              
-              const extractedMemories = extractMemories(userMsg.content, botMsg?.content || '')
-              
-              console.log('[Memory] Extracted', extractedMemories.length, 'memories from:', userMsg.content.substring(0, 50))
-              
-              if (extractedMemories.length === 0) {
-                console.log('[Memory] No memories extracted from user message')
-              }
-              
-              for (const fact of extractedMemories) {
-                // Check for duplicate first
-                const existing = await findSimilarMemory(userId, fact.content)
-                if (existing) {
-                  console.log('[Memory] Similar memory exists, skipping:', fact.content.substring(50))
-                  continue
-                }
-                
-                // Check memory count and enforce cap
-                const count = await getMemoryCount(userId)
-                if (count >= 100) {
-                  await removeLowestImportanceMemory(userId)
-                }
-                
-                // Save the memory
-                await saveMemory(userId, {
-                  userId,
-                  content: fact.content,
-                  category: fact.category,
-                  importance: fact.importance,
-                })
-                console.log('[Memory] Saved:', fact.content.substring(50))
-              }
-              
-              // Reload memories for future sessions
-              const updatedMemories = await loadMemories(userId, { limit: 20 })
-              setLoadedMemories(updatedMemories)
-              
-            } catch (err) {
-              console.error('[Memory] Error extracting memories:', err)
-            }
-          }, 1000)
-        }
+        // Note: Memory extraction already happens on every user message (before sending)
+        // So we don't need to extract again here
+
       }
 
     } catch (error) {

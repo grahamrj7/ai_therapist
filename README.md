@@ -38,6 +38,16 @@ An AI-powered therapy application that provides emotional support, therapeutic t
 - **Session Management** - Automatic daily sessions with session history
 - **Real-time Typing Indicators** - Shows when AI is responding
 - **Message Bubbles** - Clean UI for user and bot messages
+- **Session Sidebar** - View and switch between past sessions
+- **Auto-Scroll** - Automatically scrolls to new messages
+
+### 🎯 User Experience
+- **Onboarding Flow** - 3-step setup (Sign in → Name therapist → Voice selection)
+- **Settings Dialog** - Customize therapist name, voice, TTS toggle
+- **Memory Viewer** - View, search, filter, and delete stored memories with stats
+- **TTS Prompt** - Friendly prompt to enable voice after first conversation
+- **Error Boundary** - Graceful error handling with user-friendly messages
+- **Responsive Design** - Works on mobile and desktop
 
 ### 🔐 Authentication
 - **Firebase Auth** - Email/password and Google sign-in

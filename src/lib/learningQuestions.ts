@@ -225,8 +225,8 @@ export function shouldAskLearningQuestion(
     return null
   }
 
-  // Only ask with 15% probability to not overwhelm the user
-  if (Math.random() > 0.15) {
+  // Only ask with 40% probability to learn more about user
+  if (Math.random() > 0.4) {
     return null
   }
 
@@ -318,4 +318,69 @@ export function generateMemoryFollowUp(existingMemories: string[]): string | nul
   }
 
   return null
+}
+
+/**
+ * Find contextually relevant memories based on current message
+ * This helps the AI reference past conversations when relevant
+ */
+export function getRelevantMemoriesForContext(
+  memories: string[],
+  currentMessage: string
+): string[] {
+  if (memories.length === 0 || !currentMessage.trim()) {
+    return []
+  }
+
+  const relevant: string[] = []
+  const lowerMessage = currentMessage.toLowerCase()
+  const messageWords = new Set(lowerMessage.split(/\s+/).filter(w => w.length > 3))
+
+  for (const memory of memories) {
+    const lowerMemory = memory.toLowerCase()
+    const memoryWords = new Set(lowerMemory.split(/\s+/).filter(w => w.length > 3))
+    
+    // Check for keyword overlap
+    const overlap = [...messageWords].filter(w => memoryWords.has(w))
+    
+    // Also check for semantic triggers
+    const triggers = [
+      { keywords: ['work', 'job', 'career', 'boss', 'colleague'], memoryFilter: (m: string) => m.includes('work') },
+      { keywords: ['family', 'husband', 'wife', 'partner', 'kids', 'mom', 'dad', 'parent'], memoryFilter: (m: string) => m.includes('family') || m.includes('husband') || m.includes('wife') || m.includes('partner') },
+      { keywords: ['feel', 'feeling', 'emotion', 'mood', 'anxious', 'sad', 'stressed', 'worried'], memoryFilter: (m: string) => m.includes('expressed') || m.includes('feeling') },
+      { keywords: ['hobby', 'hobbies', 'free', 'time', 'enjoy', 'like to do'], memoryFilter: (m: string) => m.includes('hobby') || m.includes('enjoy') },
+      { keywords: ['live', 'location', 'city', 'house', 'apartment'], memoryFilter: (m: string) => m.includes('live') || m.includes('lives') },
+      { keywords: ['pet', 'dog', 'cat', 'animal'], memoryFilter: (m: string) => m.includes('pet') || m.includes('dog') || m.includes('cat') },
+    ]
+
+    for (const trigger of triggers) {
+      if (trigger.keywords.some(kw => lowerMessage.includes(kw))) {
+        if (trigger.memoryFilter(memory)) {
+          relevant.push(memory)
+        }
+      }
+    }
+  }
+
+  // Return up to 3 most relevant memories
+  return [...new Set(relevant)].slice(0, 3)
+}
+
+/**
+ * Generate a contextual memory prompt for the AI
+ * This is injected into the system prompt to help the AI reference relevant past info
+ */
+export function getContextualMemoryPrompt(
+  memories: string[],
+  currentMessage: string
+): string {
+  const relevant = getRelevantMemoriesForContext(memories, currentMessage)
+  
+  if (relevant.length === 0) {
+    return ''
+  }
+
+  return `RELEVANT PAST CONTEXT (reference if relevant to current message):
+${relevant.map((m, i) => `${i + 1}. ${m}`).join('\n')}
+`
 }
