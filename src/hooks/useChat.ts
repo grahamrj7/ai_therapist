@@ -330,6 +330,7 @@ export function useChat(options: UseChatOptions = {}) {
         setTimeout(async () => {
           try {
             const extractedMemories = extractMemories(content, '')
+            let actuallySaved = false
             
             for (const fact of extractedMemories) {
               const existing = await findSimilarMemory(userId, fact.content)
@@ -340,18 +341,25 @@ export function useChat(options: UseChatOptions = {}) {
                 await removeLowestImportanceMemory(userId)
               }
               
-              await saveMemory(userId, {
+              const saved = await saveMemory(userId, {
                 userId,
                 content: fact.content,
                 category: fact.category,
                 importance: fact.importance,
               })
+              
+              if (saved) {
+                actuallySaved = true
+                console.log('[Memory] Saved:', fact.content.substring(0, 50))
+              }
             }
             
-            if (extractedMemories.length > 0) {
+            if (actuallySaved) {
               const updated = await loadMemories(userId, { limit: 20 })
               setLoadedMemories(updated)
               onMemorySaved?.(messageId)
+            } else if (extractedMemories.length > 0) {
+              console.log('[Memory] Extracted but not saved (likely table missing):', extractedMemories.length)
             }
           } catch (err) {
             console.error('[Memory] Error extracting from message:', err)
