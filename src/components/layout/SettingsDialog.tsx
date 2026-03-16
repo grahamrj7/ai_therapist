@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
-import { X, Trash2, AlertTriangle, User, Volume2, Mic, Info, Settings2, Database, Brain } from "lucide-react"
+import { X, Trash2, AlertTriangle, User, Volume2, Mic, Info, Settings2, Database, Brain, TrendingUp } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MemoryViewer } from "@/components/settings/MemoryViewer"
+import { MoodChart } from "@/components/activities/MoodChart"
 
 interface VoiceOption {
   name: string
@@ -41,6 +42,7 @@ export function SettingsDialog({
   const [nameInput, setNameInput] = useState(therapistName)
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([])
   const [showMemoryViewer, setShowMemoryViewer] = useState(false)
+  const [showMoodChart, setShowMoodChart] = useState(false)
   
   // Allowed voices - must be exact matches from this list only
   const allowedVoiceNames = [
@@ -446,6 +448,25 @@ export function SettingsDialog({
                       </div>
                     )}
                   </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-linen" />
+
+                  {/* Mood History Section */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-text-primary">Mood History</h3>
+                    <p className="text-sm text-text-muted">
+                      View your emotion check-ins over time.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowMoodChart(true)}
+                      className="w-full"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      View Mood Chart
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -567,6 +588,38 @@ export function SettingsDialog({
       {/* Memory Viewer Modal */}
       {showMemoryViewer && userId && (
         <MemoryViewer userId={userId} onClose={() => setShowMemoryViewer(false)} />
+      )}
+
+      {/* Mood Chart Modal */}
+      {showMoodChart && userId && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/30 z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowMoodChart(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-linen">
+              <h2 className="font-display text-xl text-text-primary">Mood History</h2>
+              <button
+                onClick={() => setShowMoodChart(false)}
+                className="p-2 hover:bg-cream rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-text-secondary" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              <MoodChart userId={userId} />
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   )
