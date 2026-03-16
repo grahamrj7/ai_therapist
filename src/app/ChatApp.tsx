@@ -125,11 +125,16 @@ export function ChatApp() {
     const isEmotionRequest = ACTIVITY_KEYWORDS.emotions.some(keyword => 
       lowerContent.includes(keyword)
     )
+    const isSoundRequest = ACTIVITY_KEYWORDS.sound.some(keyword => 
+      lowerContent.includes(keyword)
+    )
     
     if (isBreathingRequest) {
       setActiveActivity("breathing")
     } else if (isEmotionRequest) {
       setActiveActivity("emotions")
+    } else if (isSoundRequest) {
+      setActiveActivity("sound")
     } else {
       sendMessage(content)
     }
