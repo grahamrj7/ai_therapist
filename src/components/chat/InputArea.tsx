@@ -68,7 +68,7 @@ export function InputArea({
   }
 
   return (
-    <div className="bg-white border-t border-linen px-3 sm:px-6 py-3 sm:py-5 space-y-3 sm:space-y-4">
+    <div className="bg-white border-t border-linen px-3 sm:px-6 py-3 sm:py-5 space-y-3 sm:space-y-4 pb-safe">
       {/* Toolbar: Voice Recorder (center) + Activities (right) */}
       <div className="grid grid-cols-3 items-center gap-2">
         {/* Left - Empty spacer */}
@@ -90,7 +90,7 @@ export function InputArea({
                 onClick={() => setShowActivitiesMenu(!showActivitiesMenu)}
                 onTouchStart={(e) => e.stopPropagation()}
                 className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-4 sm:px-4 py-2.5 sm:py-2 rounded-full border transition-all duration-200 text-sm touch-manipulation",
+                  "flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-2 rounded-full border transition-all duration-200 text-sm touch-manipulation min-h-[44px]",
                   showActivitiesMenu 
                     ? "bg-terracotta text-white border-terracotta" 
                     : "bg-cream text-text-secondary border-linen hover:bg-sand hover:border-terracotta-light"
@@ -181,7 +181,9 @@ export function InputArea({
             onKeyDown={handleKeyDown}
             placeholder="Share how you're feeling..."
             disabled={isTyping || isRecording}
-            className="pr-10 sm:pr-12 py-4 sm:py-6 text-base min-h-[52px] sm:min-h-[56px]"
+            className="pr-10 sm:pr-12 py-4 sm:py-6 text-base min-h-[52px] sm:min-h-[56px] touch-manipulation"
+            // Mobile keyboard handling
+            enterKeyHint="send"
           />
           <Sparkles className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-terracotta/40 pointer-events-none" />
         </div>
@@ -190,7 +192,7 @@ export function InputArea({
           onClick={handleSend}
           disabled={!input.trim() || isTyping}
           className={cn(
-            "h-14 px-5 sm:px-6 rounded-xl transition-all duration-300 min-w-[56px] sm:min-w-[auto]",
+            "h-14 px-4 sm:px-6 rounded-xl transition-all duration-300 min-w-[56px] sm:min-w-[auto] touch-manipulation",
             !input.trim() && "opacity-50"
           )}
         >

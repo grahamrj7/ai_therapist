@@ -89,36 +89,41 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
   }, [memories])
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 touch-manipulation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] sm:max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b shrink-0">
           <div>
             <h2 className="font-semibold text-lg">What I Know About You</h2>
             <p className="text-sm text-gray-500">{memories.length} memories stored</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} className="touch-manipulation">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Stats */}
         {memories.length > 0 && (
-          <div className="p-3 border-b bg-gray-50">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <span className="text-blue-600">{stats.categoryCount.personal} personal</span>
-                <span className="text-purple-600">{stats.categoryCount.topic} topics</span>
-                <span className="text-red-600">{stats.categoryCount.emotion} emotions</span>
-                <span className="text-green-600">{stats.categoryCount.preference} prefs</span>
+          <div className="p-3 border-b bg-gray-50 shrink-0">
+            <div className="flex items-center justify-between text-xs overflow-x-auto">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-blue-600 shrink-0">{stats.categoryCount.personal} personal</span>
+                <span className="text-purple-600 shrink-0">{stats.categoryCount.topic} topics</span>
+                <span className="text-red-600 shrink-0">{stats.categoryCount.emotion} emotions</span>
+                <span className="text-green-600 shrink-0">{stats.categoryCount.preference} prefs</span>
               </div>
-              <span className="text-gray-500">Avg importance: {stats.avgImportance}/10</span>
+              <span className="text-gray-500 shrink-0">Avg: {stats.avgImportance}/10</span>
             </div>
           </div>
         )}
 
         {/* Search */}
-        <div className="p-3 border-b">
+        <div className="p-3 border-b shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -126,36 +131,13 @@ export function MemoryViewer({ userId, onClose }: MemoryViewerProps) {
               placeholder="Search memories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta/50"
+              className="w-full pl-9 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta/50 touch-manipulation"
             />
           </div>
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 p-3 border-b overflow-x-auto">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-              filter === "all" ? "bg-terracotta text-white" : "bg-gray-100"
-            }`}
-          >
-            All ({memories.length})
-          </button>
-          {(["personal", "topic", "emotion", "preference"] as const).map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
-                filter === cat ? "bg-terracotta text-white" : "bg-gray-100"
-              }`}
-            >
-              {CATEGORY_LABELS[cat]} ({memories.filter(m => m.category === cat).length})
-            </button>
-          ))}
-        </div>
-
         {/* Memories list */}
-        <div className="overflow-y-auto p-4 space-y-3 max-h-[50vh]">
+        <div className="overflow-y-auto p-4 space-y-3 flex-1" style={{ maxHeight: 'calc(80vh - 200px)' }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-terracotta" />

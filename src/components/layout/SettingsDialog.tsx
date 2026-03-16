@@ -289,7 +289,7 @@ export function SettingsDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 z-50"
+            className="fixed inset-0 bg-black/30 z-50 touch-manipulation"
             onClick={onClose}
           />
 
@@ -298,39 +298,39 @@ export function SettingsDialog({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-0 right-0 top-0 sm:top-1/2 sm:-translate-y-1/2 mx-auto w-full sm:max-w-md bg-white rounded-none sm:rounded-2xl shadow-xl z-50 overflow-hidden max-h-[100dvh] sm:max-h-[85vh] flex flex-col"
+            className="fixed inset-0 sm:inset-auto sm:top-1/2 sm:-translate-y-1/2 sm:left-0 sm:right-0 sm:mx-auto w-full sm:max-w-md bg-white rounded-none sm:rounded-2xl shadow-xl z-50 overflow-hidden max-h-[100dvh] sm:max-h-[85vh] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-linen">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-linen">
               <h2 className="font-display text-xl text-text-primary">Settings</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-sand rounded-lg transition-colors"
+                className="p-2 hover:bg-sand rounded-lg transition-colors touch-manipulation"
               >
                 <X className="h-5 w-5 text-text-secondary" />
               </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex border-b border-linen">
+            {/* Tabs - scrollable on mobile */}
+            <div className="flex border-b border-linen overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors touch-manipulation whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'text-terracotta border-b-2 border-terracotta bg-terracotta/5'
                       : 'text-text-secondary hover:text-text-primary hover:bg-sand/50'
                   }`}
                 >
-                  <tab.icon className="h-4 w-4" />
-                  {tab.label}
+                  <tab.icon className="h-4 w-4 shrink-0" />
+                  <span className="hidden xs:inline">{tab.label}</span>
                 </button>
               ))}
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-safe">
               {/* General Tab */}
               {activeTab === 'general' && (
                 <div className="space-y-6">

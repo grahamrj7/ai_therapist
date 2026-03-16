@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageBubble } from "./MessageBubble"
 import { TypingIndicator } from "./TypingIndicator"
@@ -17,23 +17,36 @@ export function MessagesList({ messages, isTyping, isFreshChat, therapistName = 
   const scrollRef = useRef<HTMLDivElement>(null)
   const prevMessagesLengthRef = useRef(messages.length)
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
-      // Only auto-scroll if new message was added (not on initial load)
-      if (messages.length > prevMessagesLengthRef.current) {
-        scrollRef.current.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-      prevMessagesLengthRef.current = messages.length
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
     }
-  }, [messages, isTyping])
+  }, [])
+
+  useEffect(() => {
+    // Only auto-scroll if new message was added (not on initial load)
+    if (messages.length > prevMessagesLengthRef.current) {
+      // Delay to allow rendering
+      setTimeout(scrollToBottom, 50)
+      // Second attempt after full render
+      setTimeout(scrollToBottom, 150)
+    }
+    prevMessagesLengthRef.current = messages.length
+  }, [messages.length, isTyping, scrollToBottom])
 
   return (
     <div 
       ref={scrollRef}
       className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 overscroll-behavior-y-contain"
+      style={{ 
+        // Better mobile scrolling
+        WebkitOverflowScrolling: 'touch',
+        // Prevent bounce scroll issues
+        overscrollBehavior: 'contain'
+      }}
     >
       <AnimatePresence mode="popLayout">
         {messages.map((message) => (

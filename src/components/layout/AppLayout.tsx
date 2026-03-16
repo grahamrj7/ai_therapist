@@ -40,11 +40,11 @@ export function AppLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-cream overflow-hidden">
+    <div className="flex h-[100dvh] bg-cream overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/20 z-30 lg:hidden touch-manipulation"
           onClick={() => setSidebarOpen(false)}
         />
       )}

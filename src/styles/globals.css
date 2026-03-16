@@ -31,16 +31,26 @@
     border-color: var(--color-linen);
   }
 
+  html {
+    scroll-behavior: smooth;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
+  }
+
   body {
     background-color: var(--color-cream);
     color: var(--color-text-primary);
     font-family: var(--font-family-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Fix for mobile viewport height issues */
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 
-  html {
-    scroll-behavior: smooth;
+  #app {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 }
 
@@ -92,5 +102,51 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Safe area padding for mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Touch optimization - remove tap delay */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Prevent text selection on buttons */
+button, 
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Better tap targets */
+@media (max-width: 640px) {
+  button, 
+  [role="button"],
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger touch targets for interactive elements */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 24px;
+    min-height: 24px;
   }
 }
