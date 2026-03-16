@@ -165,6 +165,42 @@ export async function loadEmotionCheckins(userId: string, sessionId?: string): P
   return data || []
 }
 
+export interface EmotionHistoryParams {
+  days?: number // Number of days to look back, null for all
+  limit?: number
+}
+
+export async function loadEmotionHistory(
+  userId: string, 
+  params: EmotionHistoryParams = {}
+): Promise<EmotionCheckin[]> {
+  const { days = 30, limit = 100 } = params
+  
+  let query = supabase
+    .from("emotion_checkins")
+    .select("*")
+    .eq("user_id", userId)
+    .order("timestamp", { ascending: true })
+    .limit(limit)
+
+  if (days) {
+    const startDate = Date.now() - (days * 24 * 60 * 60 * 1000)
+    query = query.gte("timestamp", startDate)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("Error loading emotion history:", error)
+    return []
+  }
+
+  return data || []
+}
+
+  return data || []
+}
+
 // ============================================================================
 // Memory Database Functions
 // ============================================================================
