@@ -368,3 +368,73 @@ export async function removeLowestImportanceMemory(userId: string): Promise<bool
 
   return deleteMemory(data.id)
 }
+
+// ============================================================================
+// Journal Database Functions
+// ============================================================================
+
+export interface JournalEntry {
+  id: string
+  user_id: string
+  title: string | null
+  content: string
+  created_at: number
+  updated_at: number | null
+}
+
+export async function saveJournalEntry(
+  userId: string, 
+  entry: { title?: string; content: string; id?: string }
+): Promise<JournalEntry | null> {
+  const now = Date.now()
+  const entryData = {
+    id: entry.id || Math.random().toString(36).substring(2, 9),
+    user_id: userId,
+    title: entry.title || null,
+    content: entry.content,
+    created_at: entry.id ? undefined : now,
+    updated_at: entry.id ? now : null,
+  }
+
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .upsert(entryData)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error saving journal entry:", error)
+    return null
+  }
+
+  return data
+}
+
+export async function loadJournalEntries(userId: string): Promise<JournalEntry[]> {
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Error loading journal entries:", error)
+    return []
+  }
+
+  return data || []
+}
+
+export async function deleteJournalEntry(entryId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("journal_entries")
+    .delete()
+    .eq("id", entryId)
+
+  if (error) {
+    console.error("Error deleting journal entry:", error)
+    return false
+  }
+
+  return true
+}
