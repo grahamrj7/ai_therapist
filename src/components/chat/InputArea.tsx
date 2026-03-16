@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Send, Sparkles, Wind, Activity, Sliders, Music } from "lucide-react"
+import { Send, Sparkles, Wind, Activity, Sliders, Music, BookOpen } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ const QUICK_ACTIONS = [
 const ACTIVITIES = [
   { id: "breathing", label: "Breathe", icon: Wind, description: "Box breathing exercise" },
   { id: "emotions", label: "Emotions", icon: Sliders, description: "Track how you're feeling" },
+  { id: "journal", label: "Journal", icon: BookOpen, description: "Write your thoughts" },
   { id: "sound", label: "Sounds", icon: Music, description: "Ambient sounds for relaxation" },
 ]
 

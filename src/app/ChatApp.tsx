@@ -6,6 +6,7 @@ import { InputArea } from "@/components/chat/InputArea"
 import { BreathingExercise } from "@/components/activities/BreathingExercise"
 import { EmotionScaleSliders, type EmotionScale } from "@/components/activities/EmotionScaleSliders"
 import { SoundTherapy } from "@/components/activities/SoundTherapy"
+import { Journal } from "@/components/activities/Journal"
 import { TTSPrompt } from "@/components/TTSPrompt"
 import { Onboarding } from "./Onboarding"
 import { useChat } from "@/hooks/useChat"
@@ -235,6 +236,8 @@ export function ChatApp() {
             />
           ) : activeActivity === "sound" ? (
             <SoundTherapy onClose={() => setActiveActivity(null)} />
+          ) : activeActivity === "journal" && user ? (
+            <Journal userId={user.uid} onClose={() => setActiveActivity(null)} />
           ) : (
             <>
               <MessagesList 
