@@ -329,14 +329,21 @@ export function useChat(options: UseChatOptions = {}) {
       if (userId && content.trim()) {
         setTimeout(async () => {
           try {
+            console.log('[Memory] Extracting from:', content.substring(0, 50))
             const extractedMemories = extractMemories(content, '')
+            console.log('[Memory] Extracted count:', extractedMemories.length)
             let actuallySaved = false
             
             for (const fact of extractedMemories) {
+              console.log('[Memory] Checking fact:', fact.content.substring(0, 30), 'category:', fact.category)
               const existing = await findSimilarMemory(userId, fact.content)
-              if (existing) continue
+              if (existing) {
+                console.log('[Memory] Similar exists, skipping:', existing.content.substring(0, 30))
+                continue
+              }
               
               const count = await getMemoryCount(userId)
+              console.log('[Memory] Current count:', count)
               if (count >= 100) {
                 await removeLowestImportanceMemory(userId)
               }
@@ -350,7 +357,9 @@ export function useChat(options: UseChatOptions = {}) {
               
               if (saved) {
                 actuallySaved = true
-                console.log('[Memory] Saved:', fact.content.substring(0, 50))
+                console.log('[Memory] ✅ Saved:', fact.content.substring(0, 50))
+              } else {
+                console.log('[Memory] ❌ Save returned null')
               }
             }
             
@@ -359,7 +368,9 @@ export function useChat(options: UseChatOptions = {}) {
               setLoadedMemories(updated)
               onMemorySaved?.(messageId)
             } else if (extractedMemories.length > 0) {
-              console.log('[Memory] Extracted but not saved (likely table missing):', extractedMemories.length)
+              console.log('[Memory] Extracted but not saved:', extractedMemories.length)
+            } else {
+              console.log('[Memory] No memories extracted from message')
             }
           } catch (err) {
             console.error('[Memory] Error extracting from message:', err)

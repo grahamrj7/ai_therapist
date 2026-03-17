@@ -83,17 +83,31 @@ const HEALTH_PATTERNS = [
   /i have (?:diabetes|anxiety|depression|adhd|bipolar|ocd)/i,
 ]
 
-// Emotion indicators - expanded list
+// Emotion indicators - only include clear emotional expressions
+// Note: "love" is removed as it's too commonly used in non-emotional contexts (e.g., "I love apples")
 const EMOTION_KEYWORDS = {
-  anxiety: ['anxious', 'worried', 'nervous', 'panic', 'overwhelmed', 'stressed', 'fear', 'scared', 'racing thoughts', 'uneasy', 'tense', 'apprehensive'],
-  sadness: ['sad', 'depressed', 'down', 'hopeless', 'heartbroken', 'grief', 'lonely', 'empty', 'numb', 'melancholy', 'disappointed'],
-  anger: ['angry', 'frustrated', 'annoyed', 'irritated', 'furious', 'mad', 'resentful', 'bitter', 'hostile', 'aggravated'],
-  happiness: ['happy', 'joy', 'excited', 'grateful', 'blessed', 'content', 'peaceful', 'calm', 'satisfied', 'optimistic', 'hopeful'],
-  fatigue: ['tired', 'exhausted', 'drained', 'burnout', 'fatigue', 'drowsy', 'sleepy', 'worn out', 'spent'],
-  confusion: ['confused', 'overwhelmed', 'lost', 'uncertain', 'unsure', 'stuck', 'mixed feelings', 'unclear'],
-  shame: ['ashamed', 'embarrassed', 'humiliated', 'guilty', 'regretful', 'self-conscious'],
-  love: ['love', 'affection', 'attached', 'devoted', 'caring', 'connected', 'intimate'],
+  anxiety: ['anxious', 'worried', 'nervous', 'panic', 'overwhelmed', 'stressed', 'fear', 'scared', 'racing thoughts', 'uneasy', 'tense', 'apprehensive', 'panic attack'],
+  sadness: ['sad', 'depressed', 'down', 'hopeless', 'heartbroken', 'grief', 'lonely', 'empty', 'numb', 'melancholy', 'disappointed', 'devastated', 'miserable'],
+  anger: ['angry', 'frustrated', 'annoyed', 'irritated', 'furious', 'mad', 'resentful', 'bitter', 'hostile', 'aggravated', 'pissed', 'irked'],
+  happiness: ['happy', 'joy', 'excited', 'grateful', 'blessed', 'content', 'peaceful', 'calm', 'satisfied', 'optimistic', 'hopeful', 'elated', 'thrilled'],
+  fatigue: ['tired', 'exhausted', 'drained', 'burnout', 'fatigue', 'drowsy', 'sleepy', 'worn out', 'spent', 'beat'],
+  confusion: ['confused', 'overwhelmed', 'lost', 'uncertain', 'unsure', 'stuck', 'mixed feelings', 'unclear', 'perplexed'],
+  shame: ['ashamed', 'embarrassed', 'humiliated', 'guilty', 'regretful', 'self-conscious', 'flustered'],
 }
+
+// Context patterns that indicate actual emotional expression (not casual usage)
+const EMOTION_CONTEXT_PATTERNS = [
+  /i(?:'?m| am) (?:feeling |so |very |really |actually )?(?:anxious|worried|nervous|sad|depressed|angry|frustrated|happy|excited|tired|exhausted|confused|overwhelmed)/i,
+  /i(?:'?m| am) (?:feeling |so |very |really )?[\w]+ing/i, // feeling X, feeling sad, feeling anxious
+  /i feel (?:very |really |so |)?(anxious|worried|nervous|sad|depressed|angry|frustrated|happy|excited|tired|exhausted|confused|overwhelmed|hopeless)/i,
+  /i(?:'?ve| have) been feeling/i,
+  /lately i feel/i,
+  /i've been feeling/i,
+  /these days i feel/i,
+  /as of late i feel/i,
+  /right now i feel/i,
+  /at the moment i feel/i,
+]
 
 // ============================================================================
 // Extraction Functions
@@ -241,12 +255,30 @@ export function extractPersonalFacts(text: string): ExtractedFact[] {
 }
 
 /**
- * Extract emotional content from a message
- * Identifies emotions and mood mentioned
+ * Extract emotions from a message
+ * Only extracts emotions when they appear in emotional context
+ * (not casual usage like "I love apples" or "I'm happy to help")
  */
 export function extractEmotions(text: string): ExtractedFact[] {
   const emotions: ExtractedFact[] = []
   const lowerText = text.toLowerCase()
+
+  // First check if there's any emotional context in the message
+  // If not, skip emotion extraction entirely
+  const hasEmotionalContext = EMOTION_CONTEXT_PATTERNS.some(pattern => pattern.test(text))
+  
+  // Also check for explicit emotional statements
+  const hasExplicitEmotion = [
+    /i feel [\w]+/i,
+    /i'm feeling/i,
+    /i've been feeling/i,
+    /i feel so/i,
+    /i feel really/i,
+  ].some(pattern => pattern.test(text))
+
+  if (!hasEmotionalContext && !hasExplicitEmotion) {
+    return emotions
+  }
 
   for (const [emotion, keywords] of Object.entries(EMOTION_KEYWORDS)) {
     const matchedKeywords = keywords.filter(kw => lowerText.includes(kw))
@@ -259,6 +291,10 @@ export function extractEmotions(text: string): ExtractedFact[] {
         confidence: matchedKeywords.length > 1 ? 0.8 : 0.5,
       })
     }
+  }
+
+  return emotions
+}
   }
 
   return emotions
