@@ -295,10 +295,6 @@ export function extractEmotions(text: string): ExtractedFact[] {
 
   return emotions
 }
-  }
-
-  return emotions
-}
 
 /**
  * Extract topics from conversation
