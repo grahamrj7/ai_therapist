@@ -82,7 +82,7 @@ export function MessageBubble({ message, onTriggerBreathing, hasMemorySaved }: M
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="flex items-center gap-1 text-[10px] text-terracotta/60"
+            className="flex items-center gap-1 text-[10px] sm:text-xs text-terracotta/60 mt-1"
           >
             <Sparkles className="h-3 w-3" />
             <span>remembered</span>
