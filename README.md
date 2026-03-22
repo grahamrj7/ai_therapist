@@ -338,47 +338,64 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 
 ---
 
-## Getting Started
+## Local Setup Guide
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/grahamrj7/ai_therapist.git
-   cd ai_therapist
-   ```
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Google account (for Gemini API)
+- Supabase account (free tier works)
+- Firebase account (free tier works)
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### Step 1: Clone & Install
+```bash
+git clone https://github.com/grahamrr7/ai_therapist.git
+cd ai_therapist
+npm install
+```
 
-3. **Set up Supabase**
-   - Create a new Supabase project
-   - Run the SQL migrations in `supabase/migrations/`
-   - Get your URL and anon key
+### Step 2: Supabase Setup
+1. Go to https://supabase.com and create a new project
+2. In the SQL Editor, run all migrations in `supabase/migrations/`
+3. Go to Project Settings → API
+4. Copy the **Project URL** and **anon public key**
 
-4. **Set up Firebase**
-   - Create a Firebase project
-   - Enable Authentication (Email/Password, Google)
-   - Get your config keys
+### Step 3: Firebase Setup
+1. Go to https://console.firebase.google.com and create a project
+2. Enable **Authentication**: Enable Email/Password and Google sign-in
+3. Go to Project Settings → General
+4. Copy your **Web app config** (apiKey, authDomain, projectId, etc.)
 
-5. **Configure environment**
-   - Copy `.env.example` to `.env`
-   - Fill in your API keys
+### Step 4: Gemini API Key
+1. Go to https://aistudio.google.com/app/apikey
+2. Create a new API key
+3. Copy the key
 
-6. **Run development server**
-   ```bash
-   npm run dev
-   ```
+### Step 5: Configure Environment
+Create a `.env` file in the project root:
+```env
+VITE_GEMINI_API_KEY=your_gemini_key
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+```
 
-7. **Build for production**
-   ```bash
-   npm run build
-   ```
+### Step 6: Run
+```bash
+# Development
+npm run dev
 
-8. **Deploy to Firebase**
-   ```bash
-   npx firebase deploy
-   ```
+# Production build
+npm run build
+
+# Deploy to Firebase
+npx firebase deploy
+```
 
 ---
 
